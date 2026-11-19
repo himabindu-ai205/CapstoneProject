@@ -1,0 +1,9 @@
+# Copy this file to .env and fill in the key.
+# Do not commit .env.
+
+# Groq API key. The app uses openai/gpt-oss-120b on Groq's free tier.
+# Limits: 30 requests/minute, 1,000 requests/day, 8,000 tokens/minute, 200,000 tokens/day.
+GROQ_API_KEY=
+
+# SQLite path. Leave unset to use data/desk.sqlite.
+DESK_DB=data/desk.sqlite

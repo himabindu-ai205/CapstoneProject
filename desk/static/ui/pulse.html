@@ -1,0 +1,500 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groww — Weekly Product Pulse</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#16A389',
+        'sidebar-bg': '#0F1928',
+        'sidebar-active': '#16353B',
+        'sidebar-text': '#94A3B8',
+        'sidebar-text-active': '#FFFFFF',
+        'sidebar-border': '#1E293B',
+        'briefing-bg': '#EEF8F5',
+        'briefing-border': '#C6EAE0',
+        'success': '#15803D',
+        'success-container': '#DCFCE7',
+        'warning': '#B45309',
+        'warning-container': '#FEF3C7',
+        'error': '#B91C1C',
+        'error-container': '#FEE2E2',
+        'light-primary': '#0D7A67',
+        'light-on-primary': '#FFFFFF',
+        'light-primary-container': '#D7F3EC',
+        'light-on-primary-container': '#064E42',
+        'light-secondary': '#475569',
+        'light-on-secondary': '#FFFFFF',
+        'light-surface': '#F6F8FA',
+        'light-on-surface': '#0F172A',
+        'light-surface-container-low': '#FFFFFF',
+        'light-surface-container': '#F1F5F9',
+        'light-on-surface-variant': '#475569',
+        'light-outline': '#E2E8F0',
+        'light-outline-variant': '#CBD5E1',
+        'dark-primary': '#34D399',
+        'dark-on-primary': '#064E3B',
+        'dark-primary-container': '#065F46',
+        'dark-on-primary-container': '#D1FAE5',
+        'dark-secondary': '#94A3B8',
+        'dark-on-secondary': '#0F172A',
+        'dark-surface': '#0B1120',
+        'dark-on-surface': '#F8FAFC',
+        'dark-surface-container-low': '#111827',
+        'dark-surface-container': '#1E293B',
+        'dark-on-surface-variant': '#94A3B8',
+        'dark-outline': '#1E293B',
+        'dark-outline-variant': '#334155',
+      },
+      borderRadius: {
+        'sm': '4px',
+        'DEFAULT': '8px',
+        'md': '12px',
+        'lg': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '12px',
+        'gutter-lg': '16px',
+        'gutter-xl': '20px',
+        'card-pad': '20px',
+        'page-margin': '28px',
+      },
+      fontFamily: {
+        'display': ['"Alata"', 'sans-serif'],
+        'headline': ['"Alata"', 'sans-serif'],
+        'title': ['"Instrument Sans"', 'sans-serif'],
+        'body': ['"Instrument Sans"', 'sans-serif'],
+        'label': ['"Instrument Sans"', 'sans-serif'],
+        'mono': ['"Source Code Pro"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '42px', letterSpacing: '-0.5px', fontWeight: '400' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '400' }],
+        'headline-lg': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '400' }],
+        'headline-md': ['22px', { lineHeight: '28px', letterSpacing: '-0.2px', fontWeight: '400' }],
+        'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }],
+        'title-sm': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }],
+        'label-lg': ['13px', { lineHeight: '18px', fontWeight: '600' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+        'label-sm': ['11px', { lineHeight: '14px', fontWeight: '500' }],
+        'mono-sm': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '120ms',
+        'surface-enter': '220ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+        'surface-enter': 'cubic-bezier(0.2, 0, 0, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Alata&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Source+Code+Pro:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+</head>
+<body class="bg-light-surface text-light-on-surface font-body antialiased">
+  <div class="min-h-screen flex bg-light-surface text-light-on-surface" data-stitch-vh="min-h-screen===min-h-screen">
+    <!-- Persistent Dark Navy Sidebar -->
+    <aside id="sidebar" class="hidden lg:flex lg:flex-col lg:justify-between w-56 shrink-0 bg-sidebar-bg text-sidebar-text min-h-screen p-4 border-r border-sidebar-border" data-stitch-vh="min-h-screen===min-h-screen">
+      <div class="flex flex-col gap-6">
+        <div class="flex items-center gap-2.5 px-2 pt-1">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-accent text-light-on-primary">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">monitoring</span>
+          </span>
+          <span class="font-headline text-title-md text-sidebar-text-active">Groww Pulse</span>
+        </div>
+
+        <nav aria-label="Primary" class="flex flex-col gap-1">
+          <a href="/ui/pulse" aria-current="page" class="flex items-center gap-2.5 px-3 py-2 rounded bg-sidebar-active text-sidebar-text-active font-body text-label-lg transition-colors duration-state-change ease-state-change">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">space_dashboard</span>
+            <span>Weekly Product Pulse</span>
+          </a>
+          <a href="/ui/support" class="flex items-center gap-2.5 px-3 py-2 rounded text-sidebar-text hover:text-sidebar-text-active hover:bg-sidebar-active font-body text-body-md transition-colors duration-state-change ease-state-change">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">support_agent</span>
+            <span>Customer support</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="px-2 pt-4 border-t border-sidebar-border flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-success" aria-hidden="true"></span>
+          <span class="font-body text-label-md text-sidebar-text-active">Report ready</span>
+        </div>
+        <span class="font-mono text-mono-sm text-sidebar-text pl-4">46 reviews synced</span>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 min-w-0 p-gutter-lg lg:p-page-margin">
+      <div class="max-w-7xl mx-auto flex flex-col gap-gutter-xl">
+        <!-- Top Header -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-gutter-lg">
+          <div class="flex items-center gap-3">
+            <button data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" id="nav-toggle" aria-label="Open navigation menu" class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded bg-light-surface-container-low text-light-on-surface border border-light-outline hover:bg-light-surface-container transition-colors duration-state-change ease-state-change">
+              <span class="material-symbols-outlined text-title-md" aria-hidden="true">menu</span>
+            </button>
+            <div>
+              <h1 class="font-headline text-headline-lg text-light-on-surface text-balance">Weekly Product Pulse</h1>
+              <p class="font-body text-body-sm text-light-on-surface-variant">Aug 27 – Sep 2, 2026 · Week 36 · Groww Customer Voice</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- COMPONENT: button-secondary -->
+            <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-light-surface-container-low text-light-on-surface border border-light-outline hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change">
+              <span data-design-text-token="label-md" class="font-body text-label-md">Week 36</span>
+              <span class="material-symbols-outlined text-body-md text-light-on-surface-variant" aria-hidden="true">expand_more</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Row 1: 4 Top KPI Cards -->
+        <section aria-label="Weekly product pulse metrics" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter-lg items-stretch">
+          <!-- KPI 1 -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header>
+              <h2 data-design-text-token="label-md" class="font-body text-label-md text-light-on-surface-variant">Average rating this week</h2>
+            </header>
+            <div class="flex flex-col gap-2">
+              <p data-design-text-token="display-lg" class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface tabular-nums">
+                3.0 <span class="text-headline-md text-warning">★</span>
+              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span data-component-id="badge-error" data-component-type="badge" data-component-variant="error" role="status" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-error-container text-error">
+                  <span data-design-text-token="label-sm" class="font-body text-label-sm tabular-nums">-0.4 vs baseline</span>
+                </span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant">12-wk avg 3.4</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- KPI 2 -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header>
+              <h2 data-design-text-token="label-md" class="font-body text-label-md text-light-on-surface-variant">Reviews this week</h2>
+            </header>
+            <div class="flex flex-col gap-2">
+              <p data-design-text-token="display-lg" class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface tabular-nums">46</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span data-component-id="badge-success" data-component-type="badge" data-component-variant="success" role="status" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-container text-success">
+                  <span data-design-text-token="label-sm" class="font-body text-label-sm tabular-nums">100% categorized</span>
+                </span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant">Play Store</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- KPI 3 -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header>
+              <h2 data-design-text-token="label-md" class="font-body text-label-md text-light-on-surface-variant">Corpus (12 weeks)</h2>
+            </header>
+            <div class="flex flex-col gap-2">
+              <p data-design-text-token="display-lg" class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface tabular-nums">46</p>
+              <p data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant">Rolling synthesis corpus</p>
+              <div class="w-full h-1.5 rounded-full bg-light-surface-container overflow-hidden">
+                <div class="h-full w-full rounded-full bg-accent"></div>
+              </div>
+            </div>
+          </article>
+
+          <!-- KPI 4 -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header>
+              <h2 data-design-text-token="label-md" class="font-body text-label-md text-light-on-surface-variant">Top theme trend</h2>
+            </header>
+            <div class="flex flex-col gap-2">
+              <p data-design-text-token="display-lg" class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface">↑ Trading</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span data-component-id="badge-warning" data-component-type="badge" data-component-variant="warning" role="status" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-warning-container text-warning">
+                  <span data-design-text-token="label-sm" class="font-body text-label-sm tabular-nums">20 reviews</span>
+                </span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant">Trading &amp; orders rising</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- Row 2: Review Volume Chart + Emerging Friction Themes -->
+        <section aria-label="Review volume and emerging friction themes" class="grid grid-cols-1 xl:grid-cols-12 gap-gutter-lg items-stretch">
+          <!-- Review Volume vs Baseline -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="xl:col-span-6 h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-4">
+            <header class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 data-design-text-token="title-md" class="font-body text-title-md text-light-on-surface">Reviews analyzed per week</h2>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant tabular-nums">Last 6 weeks</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="inline-flex items-center gap-1.5 font-body text-body-sm text-light-on-surface-variant">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-accent" aria-hidden="true"></span>
+                  <span>Categorized reviews</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 font-body text-body-sm text-light-on-surface-variant">
+                  <span class="w-3.5 border-t-2 border-dashed border-light-secondary" aria-hidden="true"></span>
+                  <span>12-wk baseline</span>
+                </span>
+              </div>
+            </header>
+
+            <div class="w-full overflow-x-auto">
+              <svg viewBox="0 0 560 220" class="w-full h-52" role="img" aria-label="Weekly categorized reviews from Week 31 to Week 36">
+                <!-- Horizontal grid lines -->
+                <line x1="40" y1="30" x2="545" y2="30" stroke="#E2E8F0" stroke-width="1"></line>
+                <line x1="40" y1="85" x2="545" y2="85" stroke="#E2E8F0" stroke-width="1"></line>
+                <line x1="40" y1="140" x2="545" y2="140" stroke="#E2E8F0" stroke-width="1"></line>
+                <line x1="40" y1="195" x2="545" y2="195" stroke="#CBD5E1" stroke-width="1"></line>
+
+                <!-- Y-axis labels -->
+                <text x="30" y="34" text-anchor="end" fill="#475569" font-size="11" font-family="Instrument Sans">60</text>
+                <text x="30" y="89" text-anchor="end" fill="#475569" font-size="11" font-family="Instrument Sans">40</text>
+                <text x="30" y="144" text-anchor="end" fill="#475569" font-size="11" font-family="Instrument Sans">20</text>
+                <text x="30" y="199" text-anchor="end" fill="#475569" font-size="11" font-family="Instrument Sans">0</text>
+
+                <!-- W31 -->
+                <rect x="65" y="102" width="44" height="93" rx="4" fill="#16A389"></rect>
+                <line x1="58" y1="90" x2="116" y2="90" stroke="#0F172A" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                <text x="87" y="214" text-anchor="middle" fill="#475569" font-size="11" font-family="Instrument Sans">W31</text>
+
+                <!-- W32 -->
+                <rect x="148" y="91" width="44" height="104" rx="4" fill="#16A389"></rect>
+                <line x1="141" y1="90" x2="199" y2="90" stroke="#0F172A" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                <text x="170" y="214" text-anchor="middle" fill="#475569" font-size="11" font-family="Instrument Sans">W32</text>
+
+                <!-- W33 -->
+                <rect x="231" y="80" width="44" height="115" rx="4" fill="#16A389"></rect>
+                <line x1="224" y1="90" x2="282" y2="90" stroke="#0F172A" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                <text x="253" y="214" text-anchor="middle" fill="#475569" font-size="11" font-family="Instrument Sans">W33</text>
+
+                <!-- W34 -->
+                <rect x="314" y="85" width="44" height="110" rx="4" fill="#16A389"></rect>
+                <line x1="307" y1="90" x2="365" y2="90" stroke="#0F172A" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                <text x="336" y="214" text-anchor="middle" fill="#475569" font-size="11" font-family="Instrument Sans">W34</text>
+
+                <!-- W35 -->
+                <rect x="397" y="76" width="44" height="119" rx="4" fill="#16A389"></rect>
+                <line x1="390" y1="90" x2="448" y2="90" stroke="#0F172A" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                <text x="419" y="214" text-anchor="middle" fill="#475569" font-size="11" font-family="Instrument Sans">W35</text>
+
+                <!-- W36 -->
+                <text x="502" y="57" text-anchor="middle" fill="#0F172A" font-size="12" font-weight="600" font-family="Instrument Sans">46</text>
+                <rect x="480" y="68" width="44" height="127" rx="4" fill="#16A389"></rect>
+                <line x1="473" y1="90" x2="531" y2="90" stroke="#0F172A" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                <text x="502" y="214" text-anchor="middle" fill="#0F172A" font-size="11" font-weight="600" font-family="Instrument Sans">W36</text>
+              </svg>
+            </div>
+          </article>
+
+          <!-- Emerging Friction Themes -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="xl:col-span-6 h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col gap-3">
+            <header class="flex items-center justify-between gap-2">
+              <h2 data-design-text-token="title-md" class="font-body text-title-md text-light-on-surface">Emerging friction themes</h2>
+              <span data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant tabular-nums">3 active</span>
+            </header>
+
+            <ul class="divide-y divide-light-outline flex-1 flex flex-col justify-between">
+              <li class="py-3 first:pt-1 flex items-start gap-3">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded bg-warning-container text-warning shrink-0 mt-0.5 font-body text-label-md tabular-nums">1</span>
+                <div class="min-w-0 flex-1 flex flex-col gap-1">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="font-body text-title-sm text-light-on-surface">Trading &amp; orders</p>
+                    <span class="font-body text-label-sm text-error tabular-nums">20 reviews · 3.0★ · ↑ rising</span>
+                  </div>
+                  <p class="font-body text-body-sm text-light-on-surface-variant">High brokerage, laggy option chain, and thinner intraday margin vs rivals.</p>
+                </div>
+              </li>
+
+              <li class="py-3 flex items-start gap-3">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded bg-error-container text-error shrink-0 mt-0.5 font-body text-label-md tabular-nums">2</span>
+                <div class="min-w-0 flex-1 flex flex-col gap-1">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="font-body text-title-sm text-light-on-surface">Payments &amp; UPI</p>
+                    <span class="font-body text-label-sm text-error tabular-nums">3 reviews · 2.3★ · ↑ rising</span>
+                  </div>
+                  <p class="font-body text-body-sm text-light-on-surface-variant">Critical UPI errors send the wrong amount and erode user trust.</p>
+                </div>
+              </li>
+
+              <li class="py-3 last:pb-1 flex items-start gap-3">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded bg-error-container text-error shrink-0 mt-0.5 font-body text-label-md tabular-nums">3</span>
+                <div class="min-w-0 flex-1 flex flex-col gap-1">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="font-body text-title-sm text-light-on-surface">Withdrawals &amp; payouts</p>
+                    <span class="font-body text-label-sm text-error tabular-nums">2 reviews · 1.0★ · ↑ rising</span>
+                  </div>
+                  <p class="font-body text-body-sm text-light-on-surface-variant">Unexplained holds and missing funds causing severe dissatisfaction.</p>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </section>
+
+        <!-- Row 3: Rating Trend, Friction Share, What to do next -->
+        <section aria-label="Rating trend, theme share, and recommendations" class="grid grid-cols-1 lg:grid-cols-3 gap-gutter-lg items-stretch">
+          <!-- Rating Trend -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header class="flex items-center justify-between gap-2">
+              <h2 data-design-text-token="title-md" class="font-body text-title-md text-light-on-surface">Weekly rating trend</h2>
+              <span data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant tabular-nums">Last 6 weeks · ★</span>
+            </header>
+
+            <div class="w-full">
+              <svg viewBox="0 0 360 150" class="w-full h-36" role="img" aria-label="Weekly Play Store rating trend dipping to 3.0 stars in Week 36">
+                <defs>
+                  <linearGradient id="ratingFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#16A389" stop-opacity="0.18"></stop>
+                    <stop offset="100%" stop-color="#16A389" stop-opacity="0.01"></stop>
+                  </linearGradient>
+                </defs>
+                <!-- Grid -->
+                <line x1="36" y1="20" x2="346" y2="20" stroke="#E2E8F0" stroke-width="1"></line>
+                <line x1="36" y1="68" x2="346" y2="68" stroke="#E2E8F0" stroke-width="1"></line>
+                <line x1="36" y1="116" x2="346" y2="116" stroke="#CBD5E1" stroke-width="1"></line>
+
+                <!-- Y labels -->
+                <text x="28" y="24" text-anchor="end" fill="#475569" font-size="10" font-family="Instrument Sans">4.0</text>
+                <text x="28" y="72" text-anchor="end" fill="#475569" font-size="10" font-family="Instrument Sans">3.4</text>
+                <text x="28" y="120" text-anchor="end" fill="#475569" font-size="10" font-family="Instrument Sans">2.8</text>
+
+                <!-- 3.4 Baseline -->
+                <line x1="36" y1="68" x2="346" y2="68" stroke="#B45309" stroke-width="1.2" stroke-dasharray="3 3"></line>
+                <text x="344" y="60" text-anchor="end" fill="#B45309" font-size="10" font-weight="600" font-family="Instrument Sans">Baseline 3.4★</text>
+
+                <!-- Area + Line -->
+                <polygon points="48,54 106,58 164,66 222,62 280,78 338,100 338,116 48,116" fill="url(#ratingFill)"></polygon>
+                <polyline points="48,54 106,58 164,66 222,62 280,78 338,100" fill="none" stroke="#0D7A67" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+
+                <!-- Dip dot at W36 -->
+                <circle cx="338" cy="100" r="4" fill="#B91C1C" stroke="#FFFFFF" stroke-width="1.5"></circle>
+                <text x="328" y="112" text-anchor="end" fill="#0F172A" font-size="10" font-weight="600" font-family="Instrument Sans">3.0★</text>
+
+                <!-- X labels -->
+                <text x="48" y="136" text-anchor="middle" fill="#475569" font-size="10" font-family="Instrument Sans">W31</text>
+                <text x="106" y="136" text-anchor="middle" fill="#475569" font-size="10" font-family="Instrument Sans">W32</text>
+                <text x="164" y="136" text-anchor="middle" fill="#475569" font-size="10" font-family="Instrument Sans">W33</text>
+                <text x="222" y="136" text-anchor="middle" fill="#475569" font-size="10" font-family="Instrument Sans">W34</text>
+                <text x="280" y="136" text-anchor="middle" fill="#475569" font-size="10" font-family="Instrument Sans">W35</text>
+                <text x="338" y="136" text-anchor="middle" fill="#0F172A" font-size="10" font-weight="600" font-family="Instrument Sans">W36</text>
+              </svg>
+            </div>
+          </article>
+
+          <!-- Friction Theme Volume -->
+          <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header class="flex items-center justify-between gap-2">
+              <h2 data-design-text-token="title-md" class="font-body text-title-md text-light-on-surface">Reviews by theme</h2>
+              <span data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant tabular-nums">Week 36 · 46 total</span>
+            </header>
+
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-3">
+                <span class="w-28 font-body text-body-sm text-light-on-surface">Trading &amp; orders</span>
+                <div class="flex-1 h-2.5 rounded-full bg-light-surface-container overflow-hidden">
+                  <div class="h-full w-5/12 rounded-full bg-accent"></div>
+                </div>
+                <span class="w-12 text-right font-body text-label-md text-light-on-surface tabular-nums">20 · 43%</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="w-28 font-body text-body-sm text-light-on-surface">Payments &amp; UPI</span>
+                <div class="flex-1 h-2.5 rounded-full bg-light-surface-container overflow-hidden">
+                  <div class="h-full w-1/12 rounded-full bg-accent"></div>
+                </div>
+                <span class="w-12 text-right font-body text-label-md text-light-on-surface tabular-nums">3 · 7%</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="w-28 font-body text-body-sm text-light-on-surface">Withdrawals</span>
+                <div class="flex-1 h-2.5 rounded-full bg-light-surface-container overflow-hidden">
+                  <div class="h-full w-1/12 rounded-full bg-accent"></div>
+                </div>
+                <span class="w-12 text-right font-body text-label-md text-light-on-surface tabular-nums">2 · 4%</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="w-28 font-body text-body-sm text-light-on-surface">General &amp; praise</span>
+                <div class="flex-1 h-2.5 rounded-full bg-light-surface-container overflow-hidden">
+                  <div class="h-full w-6/12 rounded-full bg-accent"></div>
+                </div>
+                <span class="w-12 text-right font-body text-label-md text-light-on-surface tabular-nums">21 · 46%</span>
+              </div>
+
+              <div class="flex items-center justify-end">
+                <span class="font-body text-label-sm text-light-on-surface-variant tabular-nums">100% categorized</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- What to do next (AI Briefing) -->
+          <article data-component-id="card-filled" data-component-type="card" data-component-variant="filled" class="h-full bg-briefing-bg border border-briefing-border rounded-md p-card-pad flex flex-col gap-3">
+            <header class="flex items-center gap-3">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-light-surface-container-low border border-briefing-border text-light-primary shrink-0">
+                <span class="material-symbols-outlined text-title-md" aria-hidden="true">spark</span>
+              </span>
+              <div>
+                <h2 data-design-text-token="title-sm" class="font-body text-title-sm text-light-on-surface">What to do next</h2>
+                <p data-design-text-token="body-sm" class="font-body text-body-sm text-light-on-surface-variant">3 recommendations · Week 36</p>
+              </div>
+            </header>
+
+            <ul class="flex flex-col gap-2.5 font-body text-body-sm text-light-on-surface text-pretty">
+              <li>
+                <label class="flex items-start gap-2.5 cursor-pointer">
+                  <input type="checkbox" class="peer mt-0.5 w-4 h-4 rounded-sm border-light-outline-variant bg-light-surface-container-low text-light-primary focus:ring-light-primary shrink-0">
+                  <span data-design-text-token="body-sm" class="peer-checked:line-through peer-checked:text-light-on-surface-variant transition-colors duration-state-change ease-state-change">
+                    <strong>Reduce brokerage fees</strong> for young investors (Trading · Retention).
+                  </span>
+                </label>
+              </li>
+              <li>
+                <label class="flex items-start gap-2.5 cursor-pointer">
+                  <input type="checkbox" class="peer mt-0.5 w-4 h-4 rounded-sm border-light-outline-variant bg-light-surface-container-low text-light-primary focus:ring-light-primary shrink-0">
+                  <span data-design-text-token="body-sm" class="peer-checked:line-through peer-checked:text-light-on-surface-variant transition-colors duration-state-change ease-state-change">
+                    <strong>Fix UPI payment amount validation</strong> to stop wrong-value transfers.
+                  </span>
+                </label>
+              </li>
+              <li>
+                <label class="flex items-start gap-2.5 cursor-pointer">
+                  <input type="checkbox" class="peer mt-0.5 w-4 h-4 rounded-sm border-light-outline-variant bg-light-surface-container-low text-light-primary focus:ring-light-primary shrink-0">
+                  <span data-design-text-token="body-sm" class="peer-checked:line-through peer-checked:text-light-on-surface-variant transition-colors duration-state-change ease-state-change">
+                    <strong>Increase transparency on withdrawals</strong> with live hold reasons.
+                  </span>
+                </label>
+              </li>
+            </ul>
+          </article>
+        </section>
+      </div>
+    </main>
+  </div>
+
+
+
+  <script>
+    document.getElementById("nav-toggle").addEventListener("click", function () {
+      var sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("hidden");
+      sidebar.classList.toggle("flex");
+      sidebar.classList.toggle("flex-col");
+    });
+  </script>
+</body></html>

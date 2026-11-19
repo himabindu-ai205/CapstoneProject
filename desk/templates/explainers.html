@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Explainers{% endblock %}
+{% block content %}
+<h1>Canonical explainers</h1>
+{% if not rows %}
+<p>No canonical explainer yet. Approving the explainer action makes its reply reusable.</p>
+{% endif %}
+{% for row in rows %}
+<article>
+  <h2>{{ row.topic }}</h2>
+  <p>{{ row.reply_text }}</p>
+  <p><a href="{{ row.url_a }}">{{ row.url_a }}</a></p>
+  <p><a href="{{ row.url_b }}">{{ row.url_b }}</a></p>
+  <p class="meta">Last checked {{ row.last_checked }}. {{ row.reuse_count }} drafts reused this explainer.</p>
+</article>
+{% endfor %}
+{% endblock %}

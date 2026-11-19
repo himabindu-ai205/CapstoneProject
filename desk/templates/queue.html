@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Queue{% endblock %}
+{% block content %}
+<h1>Queue</h1>
+<form method="post" action="/questions">
+  <label for="question">Question</label>
+  <textarea id="question" name="question"></textarea>
+  <button type="submit">Ask</button>
+</form>
+{% if not items %}
+<p>No questions yet.</p>
+{% endif %}
+{% for item in items %}
+<article>
+  <h2>{{ item.question }}</h2>
+  <p class="meta">{{ item.intent }} on {{ item.topic }}. This draft is {{ item.draft_status or item.queue_status }}.</p>
+  <p>{{ item.body }}</p>
+  {% if item.citation_url %}
+  <p>Citation <a href="{{ item.citation_url }}">{{ item.citation_url }}</a></p>
+  {% else %}
+  <p class="meta">No citation.</p>
+  {% endif %}
+  <p>Reviewer flags: {{ item.flags if item.flags else "none" }}</p>
+  {% if item.reused_explainer_id %}
+  <p>Reused explainer {{ item.reused_explainer_id }}</p>
+  {% endif %}
+  {% if item.draft_id %}
+  <form method="post" action="/drafts/{{ item.draft_id }}">
+    <label for="body-{{ item.draft_id }}">Edit this draft</label>
+    <textarea id="body-{{ item.draft_id }}" name="body">{{ item.body }}</textarea>
+    <div class="actions">
+      <button type="submit">Save edit</button>
+    </div>
+  </form>
+  <div class="actions">
+    <form method="post" action="/drafts/{{ item.draft_id }}">
+      <button class="approve" type="submit" name="status" value="approved">Approve</button>
+    </form>
+    <form method="post" action="/drafts/{{ item.draft_id }}">
+      <button class="reject" type="submit" name="status" value="rejected">Reject</button>
+    </form>
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+{% endblock %}

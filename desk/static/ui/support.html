@@ -1,0 +1,317 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groww — Customer Support (Scheme Desk)</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#16A389',
+        'sidebar-bg': '#0F1928',
+        'sidebar-active': '#16353B',
+        'sidebar-text': '#94A3B8',
+        'sidebar-text-active': '#FFFFFF',
+        'sidebar-border': '#1E293B',
+        'briefing-bg': '#EEF8F5',
+        'briefing-border': '#C6EAE0',
+        'success': '#15803D',
+        'success-container': '#DCFCE7',
+        'warning': '#B45309',
+        'warning-container': '#FEF3C7',
+        'error': '#B91C1C',
+        'error-container': '#FEE2E2',
+        'light-primary': '#0D7A67',
+        'light-on-primary': '#FFFFFF',
+        'light-primary-container': '#D7F3EC',
+        'light-on-primary-container': '#064E42',
+        'light-secondary': '#475569',
+        'light-on-secondary': '#FFFFFF',
+        'light-surface': '#F6F8FA',
+        'light-on-surface': '#0F172A',
+        'light-surface-container-low': '#FFFFFF',
+        'light-surface-container': '#F1F5F9',
+        'light-on-surface-variant': '#475569',
+        'light-outline': '#E2E8F0',
+        'light-outline-variant': '#CBD5E1',
+        'dark-primary': '#34D399',
+        'dark-on-primary': '#064E3B',
+        'dark-primary-container': '#065F46',
+        'dark-on-primary-container': '#D1FAE5',
+        'dark-secondary': '#94A3B8',
+        'dark-on-secondary': '#0F172A',
+        'dark-surface': '#0B1120',
+        'dark-on-surface': '#F8FAFC',
+        'dark-surface-container-low': '#111827',
+        'dark-surface-container': '#1E293B',
+        'dark-on-surface-variant': '#94A3B8',
+        'dark-outline': '#1E293B',
+        'dark-outline-variant': '#334155',
+      },
+      borderRadius: {
+        'sm': '4px',
+        'DEFAULT': '8px',
+        'md': '12px',
+        'lg': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '12px',
+        'gutter-lg': '16px',
+        'gutter-xl': '20px',
+        'card-pad': '20px',
+        'page-margin': '28px',
+      },
+      fontFamily: {
+        'display': ['"Alata"', 'sans-serif'],
+        'headline': ['"Alata"', 'sans-serif'],
+        'title': ['"Instrument Sans"', 'sans-serif'],
+        'body': ['"Instrument Sans"', 'sans-serif'],
+        'label': ['"Instrument Sans"', 'sans-serif'],
+        'mono': ['"Source Code Pro"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '42px', letterSpacing: '-0.5px', fontWeight: '400' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '400' }],
+        'headline-lg': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '400' }],
+        'headline-md': ['22px', { lineHeight: '28px', letterSpacing: '-0.2px', fontWeight: '400' }],
+        'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }],
+        'title-sm': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }],
+        'label-lg': ['13px', { lineHeight: '18px', fontWeight: '600' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+        'label-sm': ['11px', { lineHeight: '14px', fontWeight: '500' }],
+        'mono-sm': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '120ms',
+        'surface-enter': '220ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+        'surface-enter': 'cubic-bezier(0.2, 0, 0, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Alata&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Source+Code+Pro:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+</head>
+<body class="bg-light-surface text-light-on-surface font-body antialiased">
+  <div class="min-h-screen flex bg-light-surface text-light-on-surface" data-stitch-vh="min-h-screen===min-h-screen">
+    <!-- Persistent Dark Navy Sidebar (shared shell + Scheme Desk context) -->
+    <aside id="sidebar" class="hidden lg:flex lg:flex-col lg:justify-between w-64 shrink-0 bg-sidebar-bg text-sidebar-text min-h-screen p-4 border-r border-sidebar-border" data-stitch-vh="min-h-screen===min-h-screen">
+      <div class="flex flex-col gap-6">
+        <div class="flex items-center gap-2.5 px-2 pt-1">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-accent text-light-on-primary">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">monitoring</span>
+          </span>
+          <span class="font-headline text-title-md text-sidebar-text-active">Groww Pulse</span>
+        </div>
+
+        <nav aria-label="Primary" class="flex flex-col gap-1">
+          <a href="/ui/pulse" class="flex items-center gap-2.5 px-3 py-2 rounded text-sidebar-text hover:text-sidebar-text-active hover:bg-sidebar-active font-body text-body-md transition-colors duration-state-change ease-state-change">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">space_dashboard</span>
+            <span>Weekly Product Pulse</span>
+          </a>
+          <a href="/ui/support" aria-current="page" class="flex items-center gap-2.5 px-3 py-2 rounded bg-sidebar-active text-sidebar-text-active font-body text-label-lg transition-colors duration-state-change ease-state-change">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">support_agent</span>
+            <span>Customer support</span>
+          </a>
+        </nav>
+
+        <!-- Scheme Desk Info -->
+        <div class="pt-4 border-t border-sidebar-border flex flex-col gap-2 px-2">
+          <p class="font-headline text-title-md text-sidebar-text-active">Scheme desk</p>
+          <p class="font-body text-body-sm text-sidebar-text">Mutual Fund FAQ Assistant</p>
+          <p class="font-body text-label-md text-sidebar-text-active pt-2">On this desk</p>
+          <p class="font-body text-body-sm text-sidebar-text text-pretty">Questions you ask collect here. The one you have open stays on the right.</p>
+        </div>
+
+        <!-- Example Questions -->
+        <div class="pt-4 border-t border-sidebar-border flex flex-col gap-2 px-2">
+          <p class="font-body text-label-md text-sidebar-text-active">Example questions</p>
+          <ul class="divide-y divide-sidebar-border flex flex-col">
+            <li>
+              <button type="button" onclick="askPreset(&#39;What is the expense ratio of HDFC Large Cap Fund Direct Growth?&#39;)" class="w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent transition-colors duration-state-change ease-state-change">
+                What is the expense ratio of HDFC Large Cap Fund Direct Growth?
+              </button>
+            </li>
+            <li>
+              <button type="button" onclick="askPreset(&#39;What is the exit load of HDFC Gold ETF Fund of Fund?&#39;)" class="w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent transition-colors duration-state-change ease-state-change">
+                What is the exit load of HDFC Gold ETF Fund of Fund?
+              </button>
+            </li>
+            <li>
+              <button type="button" onclick="askPreset(&#39;What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?&#39;)" class="w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent transition-colors duration-state-change ease-state-change">
+                What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="px-2 pt-4 border-t border-sidebar-border flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-success" aria-hidden="true"></span>
+          <span class="font-body text-label-md text-sidebar-text-active">Report ready</span>
+        </div>
+        <span class="font-mono text-mono-sm text-sidebar-text pl-4">46 reviews synced</span>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 min-w-0 p-gutter-lg lg:p-page-margin flex flex-col">
+      <div class="max-w-7xl w-full mx-auto flex-1 flex flex-col gap-gutter-xl">
+        <!-- Top Header (shared shell) -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-gutter-lg">
+          <div class="flex items-center gap-3">
+            <button data-component-id="button-icon" data-component-type="button" data-component-variant="icon" type="button" id="nav-toggle" aria-label="Open navigation menu" class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded bg-light-surface-container-low text-light-on-surface border border-light-outline hover:bg-light-surface-container transition-colors duration-state-change ease-state-change">
+              <span class="material-symbols-outlined text-title-md" aria-hidden="true">menu</span>
+            </button>
+            <div>
+              <h1 class="font-headline text-headline-lg text-light-on-surface text-balance">Customer support</h1>
+              <p class="font-body text-body-sm text-light-on-surface-variant">Scheme desk · Mutual Fund FAQ Assistant · Groww Customer Voice</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- COMPONENT: badge-dot -->
+            <span data-component-id="badge-dot" data-component-type="badge" data-component-variant="dot" role="status" aria-label="Play Store synced" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-light-surface-container-low border border-light-outline text-light-on-surface">
+              <span class="w-1.5 h-1.5 rounded-full bg-success" aria-hidden="true"></span>
+              <span data-design-text-token="label-md" class="font-body text-label-md">Play Store</span>
+            </span>
+
+            <span data-component-id="badge-dot" data-component-type="badge" data-component-variant="dot" role="status" aria-label="App Store synced" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-light-surface-container-low border border-light-outline text-light-on-surface">
+              <span class="w-1.5 h-1.5 rounded-full bg-success" aria-hidden="true"></span>
+              <span data-design-text-token="label-md" class="font-body text-label-md">App Store</span>
+            </span>
+
+            <span data-component-id="badge-dot" data-component-type="badge" data-component-variant="dot" role="status" aria-label="Zendesk synced" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-light-surface-container-low border border-light-outline text-light-on-surface">
+              <span class="w-1.5 h-1.5 rounded-full bg-success" aria-hidden="true"></span>
+              <span data-design-text-token="label-md" class="font-body text-label-md">Zendesk</span>
+            </span>
+
+            <!-- COMPONENT: button-secondary -->
+            <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-light-surface-container-low text-light-on-surface border border-light-outline hover:bg-light-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change">
+              <span data-design-text-token="label-md" class="font-body text-label-md">Week 36</span>
+              <span class="material-symbols-outlined text-body-md text-light-on-surface-variant" aria-hidden="true">expand_more</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Scheme Desk Workspace -->
+        <section aria-label="Scheme desk Q&amp;A" class="flex-1 flex flex-col justify-between bg-light-surface-container-low border border-light-outline rounded-md overflow-hidden">
+          <!-- Answer / Prompt Column -->
+          <div class="p-page-margin flex flex-col gap-6 flex-1">
+            <div class="max-w-2xl flex flex-col gap-2">
+              <h2 class="font-headline text-headline-md text-light-on-surface">Ask a scheme question</h2>
+              <p class="font-body text-body-md text-light-on-surface-variant text-pretty">
+                Ask about Large Cap, Mid Cap, Small Cap, Gold FoF, or Silver FoF. The draft, its source, and the reviewer verdict open in this column.
+              </p>
+              <p class="font-body text-label-md text-light-primary">Facts only. No investment advice.</p>
+            </div>
+
+            <!-- Dynamic Answer Container (populates when an example or question is submitted) -->
+            <div id="answer-panel" class="hidden max-w-2xl bg-light-surface border border-light-outline rounded-md p-card-pad flex flex-col gap-3">
+              <div class="flex items-center justify-between gap-2">
+                <span id="answer-question" class="font-body text-title-sm text-light-on-surface"></span>
+                <span data-component-id="badge-success" data-component-type="badge" data-component-variant="success" role="status" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-container text-success shrink-0">
+                  <span data-design-text-token="label-sm" class="font-body text-label-sm">Verified fact</span>
+                </span>
+              </div>
+              <p id="answer-body" class="font-body text-body-md text-light-on-surface text-pretty"></p>
+              <p id="answer-source" class="font-mono text-mono-sm text-light-on-surface-variant"></p>
+            </div>
+          </div>
+
+          <!-- Bottom Ask Input Dock -->
+          <form onsubmit="handleAsk(event)" class="border-t border-light-outline bg-light-surface-container-low p-card-pad flex flex-col gap-3">
+            <label for="scheme-question-input" class="sr-only">Ask a scheme question</label>
+            <textarea id="scheme-question-input" rows="2" placeholder="Ask about exit load, expense ratio, or minimum SIP" class="w-full resize-none border-0 bg-transparent p-0 font-body text-body-md text-light-on-surface placeholder:text-light-on-surface-variant focus:ring-0"></textarea>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+              <p class="font-body text-body-sm text-light-on-surface-variant">
+                Only a question is sent. Do not enter PAN, Aadhaar, account numbers, OTP, email, or phone.
+              </p>
+              <!-- COMPONENT: button-primary -->
+              <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded bg-light-primary text-light-on-primary hover:opacity-90 active:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-light-primary transition-colors duration-state-change ease-state-change shrink-0">
+                <span data-design-text-token="label-lg" class="font-body text-label-lg">Ask</span>
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const faqMap = {
+      'What is the expense ratio of HDFC Large Cap Fund Direct Growth?': {
+        body: 'The Total Expense Ratio (TER) for HDFC Large Cap Fund – Direct Plan (Growth) is 0.96% p.a. as of the latest monthly factsheet.',
+        source: 'Source: Scheme Information Document (SID) · Verified Aug 2026'
+      },
+      'What is the exit load of HDFC Gold ETF Fund of Fund?': {
+        body: 'Exit load is 1% if redeemed or switched out within 15 days from the date of allotment; Nil after 15 days.',
+        source: 'Source: Scheme Factsheet · Section: Load Structure'
+      },
+      'What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?': {
+        body: 'The minimum Systematic Investment Plan (SIP) installment for HDFC Mid Cap Fund – Direct Plan (Growth) is ₹100 (and in multiples of ₹1 thereafter).',
+        source: 'Source: Key Information Memorandum (KIM) · Verified Aug 2026'
+      }
+    };
+
+    function renderAnswer(question) {
+      const panel = document.getElementById('answer-panel');
+      const qEl = document.getElementById('answer-question');
+      const bEl = document.getElementById('answer-body');
+      const sEl = document.getElementById('answer-source');
+      const entry = faqMap[question] || {
+        body: 'Draft prepared from the latest scheme factsheet. Confirm exit load, TER, and minimum SIP values against the current SID before sending to the customer.',
+        source: 'Source: Mutual Fund Factsheet Index · Facts only'
+      };
+      qEl.textContent = question;
+      bEl.textContent = entry.body;
+      sEl.textContent = entry.source;
+      panel.classList.remove('hidden');
+    }
+
+    function askPreset(question) {
+      const input = document.getElementById('scheme-question-input');
+      input.value = question;
+      renderAnswer(question);
+    }
+
+    function handleAsk(event) {
+      event.preventDefault();
+      const input = document.getElementById('scheme-question-input');
+      const q = input.value.trim();
+      if (!q) return;
+      renderAnswer(q);
+    }
+  </script>
+
+
+
+  <script>
+    document.getElementById("nav-toggle").addEventListener("click", function () {
+      var sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("hidden");
+      sidebar.classList.toggle("flex");
+      sidebar.classList.toggle("flex-col");
+    });
+  </script>
+</body></html>

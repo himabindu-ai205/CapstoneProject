@@ -1,0 +1,254 @@
+import json
+import os
+import sqlite3
+from pathlib import Path
+
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+
+from desk.approval import decide, execute
+from desk.db import init_db
+from desk.pulse_view import build_pulse, default_data_dir
+from desk.response import edit_draft, handle_question, set_draft_status
+from desk.topics import Topic, extract_charge_topics
+
+TEMPLATES = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
+
+
+class PlainModel:
+    def complete(self, prompt: str) -> str:
+        if "http" in prompt:
+            url = next(part for part in prompt.split() if part.startswith("http"))
+            return f"GROUNDED::{url}::See the cited Groww page."
+        return "NOT_COVERED"
+
+
+def _live_model():
+    if not os.environ.get("GROQ_API_KEY"):
+        return PlainModel()
+    from desk.model import GroqModel
+
+    return GroqModel()
+
+
+def create_app(
+    conn: sqlite3.Connection | None = None,
+    topics: list[Topic] | None = None,
+    model=None,
+) -> FastAPI:
+    if conn is None:
+        conn = _open_default()
+    conn.row_factory = sqlite3.Row
+    if topics is None:
+        topics = _default_topics(conn)
+
+    application = FastAPI()
+    application.state.conn = conn
+    application.state.topics = topics
+    application.state.model = model or _live_model()
+    application.state.sink = {"doc": [], "mailbox": [], "canonical": []}
+
+    def render(request: Request, name: str, **context):
+        return TEMPLATES.TemplateResponse(request, name, context)
+
+    @application.get("/")
+    def queue(request: Request):
+        return render(request, "queue.html", page="queue", items=_queue(conn))
+
+    @application.post("/questions")
+    def post_question(question: str = Form("")):
+        handle_question(conn, question, application.state.model, topics)
+        return RedirectResponse("/", status_code=303)
+
+    @application.post("/drafts/{draft_id}")
+    def post_draft(
+        draft_id: str,
+        body: str | None = Form(None),
+        status: str | None = Form(None),
+    ):
+        if status in ("approved", "rejected"):
+            set_draft_status(conn, draft_id, status)
+        elif body is not None:
+            edit_draft(conn, draft_id, body)
+        return RedirectResponse("/", status_code=303)
+
+    @application.get("/pulse")
+    def pulse(request: Request):
+        return render(
+            request,
+            "pulse.html",
+            page="pulse",
+            themes=_themes(conn),
+            signals=_signals(conn),
+            pulses=_pulses(conn),
+        )
+
+    @application.get("/sources")
+    def sources(request: Request):
+        return render(request, "sources.html", page="sources", chunks=_cited_chunks(conn))
+
+    @application.get("/approval")
+    def approval(request: Request):
+        return render(request, "approval.html", page="approval", actions=_actions(conn))
+
+    @application.post("/approval/{action_id}")
+    def post_approval(action_id: str, status: str = Form(...)):
+        if status in ("approved", "rejected"):
+            decide(conn, action_id, status)
+        if status == "approved":
+            execute(conn, action_id, application.state.sink)
+        return RedirectResponse("/approval", status_code=303)
+
+    @application.get("/explainers")
+    def explainers(request: Request):
+        return render(request, "explainers.html", page="explainers", rows=_canonical(conn))
+
+    ui = Path(__file__).resolve().parent / "static" / "ui"
+
+    @application.get("/ui/pulse")
+    def ui_pulse(request: Request):
+        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir()))
+
+    @application.get("/ui/support")
+    def ui_support():
+        return FileResponse(ui / "support.html")
+
+    return application
+
+
+def __getattr__(name: str):
+    if name == "app":
+        application = create_app()
+        globals()["app"] = application
+        return application
+    raise AttributeError(name)
+
+
+def _open_default() -> sqlite3.Connection:
+    path = Path(os.environ.get("DESK_DB", "data/desk.sqlite"))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    init_db(conn)
+    return conn
+
+
+def _default_topics(conn: sqlite3.Connection) -> list[Topic]:
+    row = conn.execute(
+        "SELECT text FROM corpus_chunks WHERE url = ?",
+        ("https://groww.in/pricing",),
+    ).fetchone()
+    found = extract_charge_topics(row["text"] if row else "")
+    found += [Topic("payments.withdraw", "withdrawal"), Topic("account.demat", "demat")]
+    return found
+
+
+def _queue(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT q.question, q.intent, q.topic, q.status AS queue_status,
+               d.id AS draft_id, d.body, d.citation_url, d.flags, d.reused_explainer_id, d.status AS draft_status
+        FROM queue_items q
+        LEFT JOIN drafts d ON d.queue_item_id = q.id
+        ORDER BY q.created_at
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _themes(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT label, topic_id, review_ids, quotes, window_start, window_end, rank
+        FROM themes
+        ORDER BY CASE WHEN rank IS NULL THEN 1 ELSE 0 END, rank
+        """
+    ).fetchall()
+    themes = []
+    for row in rows:
+        item = dict(row)
+        item["review_ids"] = _load_json(item["review_ids"], [])
+        themes.append(item)
+    return themes
+
+
+def _signals(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT topic, count, window_start, window_end, item_ids, confusion_summary, fee_confusion_analysis
+        FROM recurrence
+        WHERE count >= 5 AND topic != 'topic.unknown'
+        ORDER BY topic
+        """
+    ).fetchall()
+    signals = []
+    for row in rows:
+        item = dict(row)
+        item["item_ids"] = _load_json(item["item_ids"], [])
+        item["analysis"] = _load_json(item["fee_confusion_analysis"], None)
+        signals.append(item)
+    return signals
+
+
+def _pulses(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        "SELECT body, word_count, window_start, window_end, status FROM pulses"
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _cited_chunks(conn: sqlite3.Connection) -> list[dict]:
+    urls: list[str] = []
+    for row in conn.execute(
+        "SELECT citation_url FROM drafts WHERE citation_url IS NOT NULL AND citation_url != ''"
+    ):
+        urls.append(row["citation_url"])
+    for row in conn.execute("SELECT url_a, url_b FROM explainers"):
+        for url in (row["url_a"], row["url_b"]):
+            if url:
+                urls.append(url)
+    seen = []
+    for url in urls:
+        if url not in seen:
+            seen.append(url)
+    chunks = []
+    for url in seen:
+        row = conn.execute(
+            "SELECT url, title, last_checked FROM corpus_chunks WHERE url = ? ORDER BY id LIMIT 1",
+            (url,),
+        ).fetchone()
+        if row is None:
+            chunks.append({"url": url, "title": "", "last_checked": ""})
+        else:
+            chunks.append(dict(row))
+    return chunks
+
+
+def _actions(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        "SELECT id, kind, destination, payload, status FROM approval_actions ORDER BY rowid"
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _canonical(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT id, topic, url_a, url_b, reply_text, last_checked,
+               (SELECT COUNT(*) FROM drafts WHERE reused_explainer_id = explainers.id) AS reuse_count
+        FROM explainers
+        WHERE status = 'canonical'
+        ORDER BY topic
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _load_json(value, fallback):
+    if not value:
+        return fallback
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return fallback

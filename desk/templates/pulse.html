@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Pulse{% endblock %}
+{% block content %}
+<h1>Weekly pulse</h1>
+{% if not themes and not signals %}
+<p>No pulse for this window yet.</p>
+{% endif %}
+{% for theme in themes %}
+<article>
+  <h2>{{ theme.label }}</h2>
+  <p>{{ theme.review_ids | length }} reviews. Window {{ theme.window_start }} through {{ theme.window_end }}.</p>
+  <p>Review ids: {{ theme.review_ids | join(", ") }}</p>
+  {% if theme.quotes %}<p>{{ theme.quotes }}</p>{% endif %}
+  {% if theme.rank %}<p class="meta">Rank {{ theme.rank }}</p>{% endif %}
+</article>
+{% endfor %}
+<h2>Recurring support signals</h2>
+{% for signal in signals %}
+<section class="signal">
+  <p>{{ signal.topic }} count {{ signal.count }}. Window {{ signal.window_start }} through {{ signal.window_end }}.</p>
+  <p>{{ signal.confusion_summary }}</p>
+  {% if signal.analysis %}
+  <div>
+    <h2>Fee confusion analysis</h2>
+    <p>{{ signal.analysis.what_is_confused }}</p>
+    <p>Fee topic {{ signal.analysis.fee_topic }}.</p>
+    <p>Review ids: {{ signal.analysis.review_ids | join(", ") }}</p>
+    {% for quote in signal.analysis.quotes %}
+    <p>{{ quote }}</p>
+    {% endfor %}
+    <p>Window {{ signal.analysis.window.start }} through {{ signal.analysis.window.end }}.</p>
+  </div>
+  {% endif %}
+</section>
+{% endfor %}
+{% for pulse in pulses %}
+<article>
+  <p class="meta">{{ pulse.word_count }} words. {{ pulse.status }}. Window {{ pulse.window_start }} through {{ pulse.window_end }}.</p>
+  <pre>{{ pulse.body }}</pre>
+</article>
+{% endfor %}
+{% endblock %}

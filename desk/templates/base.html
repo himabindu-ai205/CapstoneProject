@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Support desk{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:opsz,wght@7..72,480;7..72,680&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #e7eef2;
+      --sheet: #f7fbfc;
+      --ink: #17212b;
+      --muted: #4e5d6b;
+      --line: #c5d2db;
+      --leaf: #146b52;
+      --leaf-ink: #f3fbf7;
+      --reject: #8f2d2d;
+      --signal: #0f4c5c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
+      font-size: 1.05rem;
+      line-height: 1.45;
+    }
+    a { color: var(--signal); }
+    a:focus-visible, button:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--leaf);
+      outline-offset: 2px;
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: 11.5rem 1fr;
+      min-height: 100vh;
+    }
+    nav {
+      padding: 1.5rem 1rem;
+      border-right: 1px solid var(--line);
+      background: var(--sheet);
+    }
+    nav p {
+      margin: 0 0 1.25rem;
+      font-family: Literata, Palatino, serif;
+      font-weight: 680;
+      font-size: 1.2rem;
+    }
+    nav a {
+      display: block;
+      margin: 0 0 0.35rem;
+      padding: 0.35rem 0.55rem;
+      color: var(--ink);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+    }
+    nav a.current { border-left-color: var(--leaf); font-weight: 700; }
+    main {
+      padding: 1.75rem 2rem 3rem;
+      max-width: 46rem;
+    }
+    h1 {
+      margin: 0 0 1rem;
+      font-family: Literata, Palatino, serif;
+      font-weight: 680;
+      font-size: 2rem;
+      line-height: 1.15;
+    }
+    h2 {
+      margin: 0 0 0.4rem;
+      font-family: Literata, Palatino, serif;
+      font-weight: 680;
+      font-size: 1.35rem;
+      line-height: 1.25;
+    }
+    article, .block {
+      padding: 1.15rem 0;
+      border-top: 1px solid var(--line);
+    }
+    .signal {
+      margin: 0.75rem 0;
+      padding: 0.85rem 1rem;
+      border-left: 4px solid var(--signal);
+      background: var(--sheet);
+    }
+    p { margin: 0.35rem 0; max-width: 68ch; }
+    .meta { color: var(--muted); }
+    form { margin: 0.7rem 0; }
+    textarea, input[type="text"] {
+      display: block;
+      width: 100%;
+      margin: 0.35rem 0 0.5rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      font: inherit;
+    }
+    textarea { min-height: 5.5rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    button {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--ink);
+      background: var(--sheet);
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+    }
+    button.approve { background: var(--leaf); border-color: var(--leaf); color: var(--leaf-ink); }
+    button.reject { background: transparent; border-color: var(--reject); color: var(--reject); }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      margin: 0.4rem 0;
+      font-family: "Atkinson Hyperlegible", sans-serif;
+      font-size: 0.98rem;
+    }
+    table { border-collapse: collapse; width: 100%; }
+    th, td {
+      padding: 0.45rem 0.6rem 0.45rem 0;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+    @media (max-width: 720px) {
+      .shell { grid-template-columns: 1fr; }
+      nav { border-right: 0; border-bottom: 1px solid var(--line); }
+      nav p { margin-bottom: 0.6rem; }
+      nav a { display: inline-block; margin-right: 0.25rem; }
+      main { padding: 1.25rem 1rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <p>Support desk</p>
+      <a href="/" class="{% if page == 'queue' %}current{% endif %}">Queue</a>
+      <a href="/pulse" class="{% if page == 'pulse' %}current{% endif %}">Pulse</a>
+      <a href="/sources" class="{% if page == 'sources' %}current{% endif %}">Sources</a>
+      <a href="/approval" class="{% if page == 'approval' %}current{% endif %}">Approval</a>
+      <a href="/explainers" class="{% if page == 'explainers' %}current{% endif %}">Explainers</a>
+    </nav>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

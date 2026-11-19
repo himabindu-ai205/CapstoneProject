@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+mcp
+httpx
+beautifulsoup4
+google-play-scraper
+pytest

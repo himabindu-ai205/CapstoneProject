@@ -1,0 +1,255 @@
+{% include "ui_pulse_head.html" %}
+<body class="bg-light-surface text-light-on-surface font-body antialiased">
+  <div class="min-h-screen flex bg-light-surface text-light-on-surface">
+    <aside id="sidebar" class="hidden lg:flex lg:flex-col lg:justify-between w-56 shrink-0 bg-sidebar-bg text-sidebar-text min-h-screen p-4 border-r border-sidebar-border">
+      <div class="flex flex-col gap-6">
+        <div class="flex items-center gap-2.5 px-2 pt-1">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-accent text-light-on-primary">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">monitoring</span>
+          </span>
+          <span class="font-headline text-title-md text-sidebar-text-active">Groww Pulse</span>
+        </div>
+        <nav aria-label="Primary" class="flex flex-col gap-1">
+          <a href="/ui/pulse" aria-current="page" class="flex items-center gap-2.5 px-3 py-2 rounded bg-sidebar-active text-sidebar-text-active font-body text-label-lg">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">space_dashboard</span>
+            <span>Weekly Product Pulse</span>
+          </a>
+          <a href="/ui/support" class="flex items-center gap-2.5 px-3 py-2 rounded text-sidebar-text hover:text-sidebar-text-active hover:bg-sidebar-active font-body text-body-md">
+            <span class="material-symbols-outlined text-title-md" aria-hidden="true">support_agent</span>
+            <span>Customer support</span>
+          </a>
+        </nav>
+      </div>
+      <div class="px-2 pt-4 border-t border-sidebar-border flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-success" aria-hidden="true"></span>
+          <span class="font-body text-label-md text-sidebar-text-active">Report ready</span>
+        </div>
+        <span class="font-mono text-mono-sm text-sidebar-text pl-4">{{ pulse.synced }} reviews synced</span>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0 p-gutter-lg lg:p-page-margin">
+      <div class="max-w-7xl mx-auto flex flex-col gap-gutter-xl">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-gutter-lg">
+          <div class="flex items-center gap-3">
+            <button type="button" id="nav-toggle" aria-label="Open navigation menu" class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded bg-light-surface-container-low text-light-on-surface border border-light-outline">
+              <span class="material-symbols-outlined text-title-md" aria-hidden="true">menu</span>
+            </button>
+            <div>
+              <h1 class="font-headline text-headline-lg text-light-on-surface text-balance">Weekly Product Pulse</h1>
+              <p class="font-body text-body-sm text-light-on-surface-variant">{{ pulse.subtitle }} · Groww Customer Voice</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-light-surface-container-low text-light-on-surface border border-light-outline">
+              <span class="font-body text-label-md">{{ pulse.week_button }}</span>
+            </span>
+          </div>
+        </header>
+
+        {% if not pulse.ready %}
+        <p class="font-body text-body-md text-light-on-surface-variant">No reviews in the 4-week corpus.</p>
+        {% else %}
+        <section aria-label="Weekly product pulse metrics" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter-lg items-stretch">
+          <article class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <h2 class="font-body text-label-md text-light-on-surface-variant">Average rating this week</h2>
+            <div class="flex flex-col gap-2">
+              <p class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface tabular-nums">
+                {{ pulse.this_rating }} <span class="text-headline-md {% if pulse.delta is not none and pulse.delta < 0 %}text-warning{% else %}text-light-primary{% endif %}">★</span>
+              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded {% if pulse.delta is not none and pulse.delta < 0 %}bg-error-container text-error{% elif pulse.delta is not none and pulse.delta > 0 %}bg-success-container text-success{% else %}bg-light-surface-container text-light-on-surface-variant{% endif %}">
+                  <span class="font-body text-label-sm tabular-nums">{{ pulse.delta_label }}</span>
+                </span>
+                <span class="font-body text-body-sm text-light-on-surface-variant">{{ pulse.baseline_label }}</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <h2 class="font-body text-label-md text-light-on-surface-variant">Reviews this week</h2>
+            <div class="flex flex-col gap-2">
+              <p class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface tabular-nums">{{ pulse.this_count }}</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-success-container text-success">
+                  <span class="font-body text-label-sm">100% categorized</span>
+                </span>
+                <span class="font-body text-body-sm text-light-on-surface-variant">Play Store</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <h2 class="font-body text-label-md text-light-on-surface-variant">Corpus ({{ pulse.corpus_range }})</h2>
+            <div class="flex flex-col gap-2">
+              <p class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface tabular-nums">{{ pulse.corpus_count }}</p>
+              <p class="font-body text-body-sm text-light-on-surface-variant">Rolling synthesis corpus</p>
+              <div class="w-full h-1.5 rounded-full bg-light-surface-container overflow-hidden">
+                <div class="h-full rounded-full bg-accent" style="width: {{ pulse.corpus_fill }}%"></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <h2 class="font-body text-label-md text-light-on-surface-variant">Top theme trend</h2>
+            {% if pulse.top %}
+            <div class="flex flex-col gap-2">
+              <p class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface">{{ pulse.top.arrow }} {{ pulse.top.label.split(' ')[0] }}</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-warning-container text-warning">
+                  <span class="font-body text-label-sm tabular-nums">{{ pulse.top.count }} reviews</span>
+                </span>
+                <span class="font-body text-body-sm text-light-on-surface-variant">{{ pulse.top.label }} {{ pulse.top.trend }}</span>
+              </div>
+            </div>
+            {% endif %}
+          </article>
+        </section>
+
+        <section aria-label="Review volume and emerging friction themes" class="grid grid-cols-1 xl:grid-cols-12 gap-gutter-lg items-stretch">
+          <article class="xl:col-span-6 h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-4">
+            <header class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 class="font-body text-title-md text-light-on-surface">Reviews analyzed per week</h2>
+                <span class="font-body text-body-sm text-light-on-surface-variant tabular-nums">Last {{ pulse.chart_weeks }} weeks</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="inline-flex items-center gap-1.5 font-body text-body-sm text-light-on-surface-variant">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-accent" aria-hidden="true"></span>
+                  <span>Categorized reviews</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 font-body text-body-sm text-light-on-surface-variant">
+                  <span class="w-3.5 border-t-2 border-dashed border-light-secondary" aria-hidden="true"></span>
+                  <span>corpus baseline</span>
+                </span>
+              </div>
+            </header>
+            <div class="w-full overflow-x-auto">
+              <svg viewBox="0 0 560 220" class="w-full h-52" role="img" aria-label="Categorized reviews from {{ pulse.corpus_range }} and this week">
+                <line x1="48" y1="{{ pulse.weeks.baseline_y }}" x2="545" y2="{{ pulse.weeks.baseline_y }}" stroke="#0F172A" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                {% for tick in pulse.weeks.ticks %}
+                <text x="40" y="{{ tick.y + 4 }}" text-anchor="end" fill="#475569" font-size="11" font-family="Instrument Sans">{{ tick.label }}</text>
+                {% endfor %}
+                {% for bar in pulse.weeks.bars %}
+                {% if bar.current %}<text x="{{ bar.cx }}" y="{{ bar.y - 8 }}" text-anchor="middle" fill="#0F172A" font-size="12" font-weight="600" font-family="Instrument Sans">{{ bar.count }}</text>{% endif %}
+                <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}" rx="4" fill="#16A389"></rect>
+                <text x="{{ bar.cx }}" y="214" text-anchor="middle" fill="{% if bar.current %}#0F172A{% else %}#475569{% endif %}" font-size="11" {% if bar.current %}font-weight="600"{% endif %} font-family="Instrument Sans">{{ bar.label }}</text>
+                {% endfor %}
+              </svg>
+            </div>
+          </article>
+
+          <article class="xl:col-span-6 h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col gap-3">
+            <header class="flex items-center justify-between gap-2">
+              <h2 class="font-body text-title-md text-light-on-surface">Emerging friction themes</h2>
+              <span class="font-body text-body-sm text-light-on-surface-variant tabular-nums">{{ pulse.themes|length }} active</span>
+            </header>
+            <ul class="divide-y divide-light-outline flex flex-col">
+              {% for theme in pulse.themes %}
+              <li class="py-3 first:pt-1 flex items-start gap-3">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded {% if theme.friction %}bg-error-container text-error{% else %}bg-success-container text-success{% endif %} shrink-0 mt-0.5 font-body text-label-md tabular-nums">{{ loop.index }}</span>
+                <div class="min-w-0 flex-1 flex flex-col gap-1">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="font-body text-title-sm text-light-on-surface">{{ theme.label }}</p>
+                    <span class="font-body text-label-sm {% if theme.friction and theme.trend == 'rising' %}text-error{% elif theme.trend == 'easing' %}text-success{% else %}text-light-on-surface-variant{% endif %} tabular-nums">{{ theme.count }} reviews · {{ theme.rating }}★ · {{ theme.arrow }} {{ theme.trend }}</span>
+                  </div>
+                  {% if theme.quote %}<p class="font-body text-body-sm text-light-on-surface-variant">{{ theme.quote }}</p>{% endif %}
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          </article>
+        </section>
+
+        <section aria-label="Rating trend, theme share, and review lines" class="grid grid-cols-1 lg:grid-cols-3 gap-gutter-lg items-stretch">
+          <article class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header class="flex items-center justify-between gap-2">
+              <h2 class="font-body text-title-md text-light-on-surface">Weekly rating trend</h2>
+              <span class="font-body text-body-sm text-light-on-surface-variant tabular-nums">Last {{ pulse.chart_weeks }} weeks · ★</span>
+            </header>
+            <svg viewBox="0 0 360 150" class="w-full h-36" role="img" aria-label="Weekly rating, latest week {{ pulse.this_rating }} stars">
+              <defs>
+                <linearGradient id="ratingFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#16A389" stop-opacity="0.18"></stop>
+                  <stop offset="100%" stop-color="#16A389" stop-opacity="0.01"></stop>
+                </linearGradient>
+              </defs>
+              {% for tick in pulse.ratings.ticks %}
+              <text x="28" y="{{ tick.y + 3 }}" text-anchor="end" fill="#475569" font-size="10" font-family="Instrument Sans">{{ tick.label }}</text>
+              {% endfor %}
+              {% if pulse.ratings.baseline_y is not none %}
+              <line x1="36" y1="{{ pulse.ratings.baseline_y }}" x2="346" y2="{{ pulse.ratings.baseline_y }}" stroke="#B45309" stroke-width="1.2" stroke-dasharray="3 3"></line>
+              {% endif %}
+              {% if pulse.ratings.area %}<polygon points="{{ pulse.ratings.area }}" fill="url(#ratingFill)"></polygon>{% endif %}
+              {% if pulse.ratings.line %}<polyline points="{{ pulse.ratings.line }}" fill="none" stroke="#0D7A67" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>{% endif %}
+              {% for point in pulse.ratings.points %}
+              {% if point.current %}
+              <circle cx="{{ point.x }}" cy="{{ point.y }}" r="4" fill="#0D7A67" stroke="#FFFFFF" stroke-width="1.5"></circle>
+              <text x="{{ point.x }}" y="{{ point.y - 8 }}" text-anchor="middle" fill="#0F172A" font-size="10" font-weight="600" font-family="Instrument Sans">{{ point.rating }}★</text>
+              {% endif %}
+              {% endfor %}
+              {% for label in pulse.ratings.labels %}
+              <text x="{{ label.x }}" y="136" text-anchor="middle" fill="{% if label.current %}#0F172A{% else %}#475569{% endif %}" font-size="10" {% if label.current %}font-weight="600"{% endif %} font-family="Instrument Sans">{{ label.label }}</text>
+              {% endfor %}
+            </svg>
+          </article>
+
+          <article class="h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col justify-between gap-3">
+            <header class="flex items-center justify-between gap-2">
+              <h2 class="font-body text-title-md text-light-on-surface">Reviews by theme</h2>
+              <span class="font-body text-body-sm text-light-on-surface-variant tabular-nums">{{ pulse.week_button }} · {{ pulse.week_total }} total</span>
+            </header>
+            <div class="flex flex-col gap-3">
+              {% for theme in pulse.shares %}
+              <div class="flex items-center gap-3">
+                <span class="w-28 font-body text-body-sm text-light-on-surface">{{ theme.label }}</span>
+                <div class="flex-1 h-2.5 rounded-full bg-light-surface-container overflow-hidden">
+                  <div class="h-full rounded-full bg-accent" style="width: {{ theme.share }}%"></div>
+                </div>
+                <span class="w-16 text-right font-body text-label-md text-light-on-surface tabular-nums">{{ theme.count }} · {{ theme.share }}%</span>
+              </div>
+              {% endfor %}
+              <div class="flex items-center justify-end">
+                <span class="font-body text-label-sm text-light-on-surface-variant tabular-nums">100% categorized</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="h-full bg-briefing-bg border border-briefing-border rounded-md p-card-pad flex flex-col gap-3">
+            <header class="flex items-center gap-3">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-light-surface-container-low border border-briefing-border text-light-primary shrink-0">
+                <span class="material-symbols-outlined text-title-md" aria-hidden="true">spark</span>
+              </span>
+              <div>
+                <h2 class="font-body text-title-sm text-light-on-surface">What to do next</h2>
+                <p class="font-body text-body-sm text-light-on-surface-variant">{{ pulse.themes|length }} recommendations · {{ pulse.week_button }}</p>
+              </div>
+            </header>
+            <ul class="flex flex-col gap-2.5 font-body text-body-sm text-light-on-surface text-pretty">
+              {% for theme in pulse.themes %}
+              <li>
+                <label class="flex items-start gap-2.5 cursor-pointer">
+                  <input type="checkbox" class="peer mt-0.5 w-4 h-4 rounded-sm border-light-outline-variant bg-light-surface-container-low text-light-primary focus:ring-light-primary shrink-0">
+                  <span class="peer-checked:line-through peer-checked:text-light-on-surface-variant">
+                    <strong>{{ theme.action }}</strong> {{ theme.detail }} ({{ theme.label }} · {{ theme.count }} reviews).
+                  </span>
+                </label>
+              </li>
+              {% endfor %}
+            </ul>
+          </article>
+        </section>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+  <script>
+    document.getElementById("nav-toggle").addEventListener("click", function () {
+      var sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("hidden");
+      sidebar.classList.toggle("flex");
+      sidebar.classList.toggle("flex-col");
+    });
+  </script>
+</body></html>

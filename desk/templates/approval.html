@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Approval{% endblock %}
+{% block content %}
+<h1>Approval</h1>
+{% if not actions %}
+<p>No actions are waiting.</p>
+{% endif %}
+{% for action in actions %}
+<article>
+  <h2>{{ action.kind }}</h2>
+  <p>Destination {{ action.destination }}</p>
+  <p class="meta">Status {{ action.status }}</p>
+  <pre>{{ action.payload }}</pre>
+  {% if action.status == 'pending' %}
+  <div class="actions">
+    <form method="post" action="/approval/{{ action.id }}">
+      <button class="approve" type="submit" name="status" value="approved">Approve</button>
+    </form>
+    <form method="post" action="/approval/{{ action.id }}">
+      <button class="reject" type="submit" name="status" value="rejected">Reject</button>
+    </form>
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+{% endblock %}
