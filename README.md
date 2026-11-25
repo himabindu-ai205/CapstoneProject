@@ -26,7 +26,7 @@ pip install -r requirements.txt
 python -m desk
 ```
 
-The app listens on `http://127.0.0.1:8000`. The five desk pages are `/`, `/pulse`, `/sources`, `/approval`, and `/explainers`.
+The app listens on `http://127.0.0.1:8000`. That address is the tabbed frontend: Weekly Product Pulse and Customer support. The desk pages are `/pulse`, `/sources`, `/approval`, and `/explainers`.
 
 `GROQ_API_KEY` selects the Groq model `openai/gpt-oss-120b` for the official draft. `GEMINI_API_KEY` selects Gemini `gemini-2.5-flash` for the reviewer. Without a key that step uses the local stub. `DESK_DB` is the SQLite file. It defaults to `data/desk.sqlite`.
 

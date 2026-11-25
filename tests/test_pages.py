@@ -39,10 +39,11 @@ def client(seeded, topics):
 
 
 def test_pages_render_the_signal_and_hide_user_names(client, seeded):
-    queue = client.get("/")
-    assert queue.status_code == 200
-    assert "When are DP charges levied?" in queue.text
-    assert "Priya Shah" not in queue.text
+    home = client.get("/")
+    assert home.status_code == 200
+    assert "Weekly Product Pulse" in home.text
+    assert "Customer support" in home.text
+    assert "Priya Shah" not in home.text
     pulse = client.get("/pulse")
     assert "Recurring support signals" in pulse.text
     assert "fees.dp" in pulse.text

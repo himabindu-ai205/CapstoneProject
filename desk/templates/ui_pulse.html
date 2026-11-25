@@ -331,7 +331,7 @@
         btn.setAttribute("aria-selected", on ? "true" : "false");
       });
       var next = support ? "#support" : "#pulse";
-      if (location.hash !== next) history.replaceState(null, "", "/ui" + next);
+      if (location.hash !== next) history.replaceState(null, "", "/" + next);
     }
 
     document.querySelectorAll("[data-tab]").forEach(function (btn) {

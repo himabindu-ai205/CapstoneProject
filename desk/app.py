@@ -74,8 +74,8 @@ def create_app(
         return TEMPLATES.TemplateResponse(request, name, context)
 
     @application.get("/")
-    def queue(request: Request):
-        return render(request, "queue.html", page="queue", items=_queue(conn))
+    def home(request: Request):
+        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir()))
 
     @application.post("/questions")
     def post_question(question: str = Form("")):
@@ -126,16 +126,16 @@ def create_app(
         return render(request, "explainers.html", page="explainers", rows=_canonical(conn))
 
     @application.get("/ui")
-    def ui_home(request: Request):
-        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir()))
+    def ui_home():
+        return RedirectResponse("/#pulse", status_code=302)
 
     @application.get("/ui/pulse")
     def ui_pulse():
-        return RedirectResponse("/ui#pulse", status_code=302)
+        return RedirectResponse("/#pulse", status_code=302)
 
     @application.get("/ui/support")
     def ui_support():
-        return RedirectResponse("/ui#support", status_code=302)
+        return RedirectResponse("/#support", status_code=302)
 
     return application
 
@@ -165,19 +165,6 @@ def _default_topics(conn: sqlite3.Connection) -> list[Topic]:
     found = extract_charge_topics(row["text"] if row else "")
     found += [Topic("payments.withdraw", "withdrawal"), Topic("account.demat", "demat")]
     return found
-
-
-def _queue(conn: sqlite3.Connection) -> list[dict]:
-    rows = conn.execute(
-        """
-        SELECT q.question, q.intent, q.topic, q.status AS queue_status,
-               d.id AS draft_id, d.body, d.citation_url, d.flags, d.reused_explainer_id, d.status AS draft_status
-        FROM queue_items q
-        LEFT JOIN drafts d ON d.queue_item_id = q.id
-        ORDER BY q.created_at
-        """
-    ).fetchall()
-    return [dict(row) for row in rows]
 
 
 def _themes(conn: sqlite3.Connection) -> list[dict]:
