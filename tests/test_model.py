@@ -2,7 +2,7 @@ import json
 
 import httpx
 
-from desk.model import GROQ_MODEL, TOKENS_PER_MINUTE, GroqBudgetError, GroqModel
+from desk.model import GEMINI_MODEL, GROQ_MODEL, TOKENS_PER_MINUTE, GeminiModel, GroqBudgetError, GroqModel
 
 
 def _client(handler) -> httpx.Client:
@@ -66,3 +66,24 @@ def test_a_second_call_in_the_same_minute_is_refused():
         assert "minute" in str(error).lower()
     else:
         raise AssertionError("expected the second call to be refused")
+
+
+def test_reviewer_calls_gemini_flash():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        seen["key"] = request.headers["x-goog-api-key"]
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={"candidates": [{"content": {"parts": [{"text": "CLEAR"}]}}]},
+        )
+
+    model = GeminiModel(api_key="gemini-key", model="gemini-2.5-flash", http=_client(handler))
+    assert model.complete("Draft: DP charges apply per sell.") == "CLEAR"
+    assert seen["key"] == "gemini-key"
+    assert seen["url"].endswith("/models/gemini-2.5-flash:generateContent")
+    assert seen["body"]["generationConfig"]["temperature"] == 0
+    assert "reviewer" in seen["body"]["systemInstruction"]["parts"][0]["text"].lower()
+    assert model.model == GEMINI_MODEL

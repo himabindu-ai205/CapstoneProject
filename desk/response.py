@@ -18,7 +18,13 @@ class ModelClient(Protocol):
     def complete(self, prompt: str) -> str: ...
 
 
-def handle_question(conn: sqlite3.Connection, question: str, model: ModelClient, topics: list[Topic]) -> dict:
+def handle_question(
+    conn: sqlite3.Connection,
+    question: str,
+    model: ModelClient,
+    topics: list[Topic],
+    reviewer: ModelClient | None = None,
+) -> dict:
     queue_id = str(uuid.uuid4())
     conn.execute(
         """
@@ -28,7 +34,7 @@ def handle_question(conn: sqlite3.Connection, question: str, model: ModelClient,
         (queue_id, question, _now()),
     )
     conn.commit()
-    return orchestrate(conn, queue_id, question, model, topics)
+    return orchestrate(conn, queue_id, question, model, topics, reviewer)
 
 
 def orchestrate(
@@ -37,6 +43,7 @@ def orchestrate(
     question: str,
     model: ModelClient,
     topics: list[Topic],
+    reviewer: ModelClient | None = None,
 ) -> dict:
     intent = classify_intent(question)
     topic = assign_topic(question, topics)
@@ -77,7 +84,7 @@ def orchestrate(
         reused = None
         outcome = "not_covered"
     routing_note = _routing_note(topic, reviews, canonical["count"], reused)
-    flags = _review(body, citation, official["hits"])
+    flags = review_draft(body, citation, official["hits"], reviewer)
     draft_id = _put_draft(conn, queue_id, body, citation, routing_note, flags, reused)
     conn.commit()
     record(conn, queue_id, intent, topic, redacted, WINDOW_START, WINDOW_END)
@@ -139,7 +146,23 @@ def _canonical_agent(conn: sqlite3.Connection, topic: str) -> dict:
     }
 
 
-def _review(body: str, citation: str | None, hits: list[dict]) -> str:
+_REVIEW_FLAGS = ("scope", "length", "ungrounded")
+
+
+def review_draft(body: str, citation: str | None, hits: list[dict], reviewer: ModelClient | None = None) -> str:
+    coded = _code_flags(body, citation, hits)
+    if reviewer is None:
+        return coded
+    try:
+        parsed = _parse_flags(reviewer.complete(_review_prompt(body, citation, hits)))
+    except Exception:
+        return coded
+    if parsed is None:
+        return coded
+    return parsed
+
+
+def _code_flags(body: str, citation: str | None, hits: list[dict]) -> str:
     flags = []
     if scope_flag(body):
         flags.append("scope")
@@ -149,6 +172,30 @@ def _review(body: str, citation: str | None, hits: list[dict]) -> str:
     if citation and citation not in hit_urls:
         flags.append("ungrounded")
     return ",".join(flags)
+
+
+def _review_prompt(body: str, citation: str | None, hits: list[dict]) -> str:
+    urls = " ".join(hit["url"] for hit in hits) or "(none)"
+    cited = citation or "(none)"
+    return (
+        "Review this draft. Flag scope when it recommends a buy or sell, or states a return, NAV, or CAGR. "
+        "Flag length when it has more than three sentences. "
+        "Flag ungrounded when the citation is not one of the allowed source URLs. "
+        "A missing citation is not ungrounded.\n"
+        f"Citation: {cited}\n"
+        f"Allowed source URLs: {urls}\n"
+        f"Draft: {body}"
+    )
+
+
+def _parse_flags(raw: str) -> str | None:
+    line = raw.strip().splitlines()[-1].strip().lower().rstrip(".")
+    if line == "clear":
+        return ""
+    tokens = [part.strip() for part in line.split(",") if part.strip()]
+    if not tokens or any(token not in _REVIEW_FLAGS for token in tokens):
+        return None
+    return ",".join(name for name in _REVIEW_FLAGS if name in tokens)
 
 
 def edit_draft(conn: sqlite3.Connection, draft_id: str, body: str) -> None:

@@ -38,3 +38,27 @@ def test_grounded_draft_uses_only_a_returned_url(conn, topics):
     assert result["citation_url"] == DP_URL
     assert sentence_count(result["body"]) <= 3
     assert "ungrounded" not in result["flags"]
+
+
+def test_reviewer_uses_gemini_flags_and_refusals_skip_it(conn, topics):
+    from desk.response import handle_question
+
+    class FlagModel:
+        def __init__(self):
+            self.calls = 0
+
+        def complete(self, prompt: str) -> str:
+            self.calls += 1
+            assert "Draft:" in prompt
+            return "scope, ungrounded"
+
+    answer = ScriptedModel()
+    reviewer = FlagModel()
+    result = handle_question(conn, "When are DP charges levied?", answer, topics, reviewer)
+    assert reviewer.calls == 1
+    assert answer.calls == 1
+    assert result["flags"] == "scope,ungrounded"
+
+    refused = FlagModel()
+    handle_question(conn, "What is the NAV of SBI Large Cap?", ScriptedModel(), topics, refused)
+    assert refused.calls == 0

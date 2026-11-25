@@ -14,7 +14,7 @@ Groww support and product share one desk. Play Store reviews become themes and a
 | Tools | MCP Python SDK. Corpus, reviews, desk, and publish are the tool surface |
 | Corpus fetch | httpx and BeautifulSoup. Scheme performance figures are stripped in code |
 | Reviews fetch | google-play-scraper, English India feed |
-| Model | Groq `openai/gpt-oss-120b`, behind one chat client. A local stub is used when `GROQ_API_KEY` is unset |
+| Model | Groq `openai/gpt-oss-120b` writes the cited draft. Gemini `gemini-2.5-flash` reviews it. A local stub is used when the matching key is unset |
 | Tests | pytest. `python -m evals.run_evals` runs the assembled checks |
 
 ## Setup
@@ -28,7 +28,7 @@ python -m desk
 
 The app listens on `http://127.0.0.1:8000`. The five desk pages are `/`, `/pulse`, `/sources`, `/approval`, and `/explainers`.
 
-`GROQ_API_KEY` selects the Groq model `openai/gpt-oss-120b`. Without that key the desk uses the local stub. `DESK_DB` is the SQLite file. It defaults to `data/desk.sqlite`.
+`GROQ_API_KEY` selects the Groq model `openai/gpt-oss-120b` for the official draft. `GEMINI_API_KEY` selects Gemini `gemini-2.5-flash` for the reviewer. Without a key that step uses the local stub. `DESK_DB` is the SQLite file. It defaults to `data/desk.sqlite`.
 
 ```bash
 python -m desk.build_corpus

@@ -25,6 +25,9 @@ class PlainModel:
 
 
 def _live_model():
+    from desk.model import load_env
+
+    load_env()
     if not os.environ.get("GROQ_API_KEY"):
         return PlainModel()
     from desk.model import GroqModel
@@ -32,10 +35,22 @@ def _live_model():
     return GroqModel()
 
 
+def _live_reviewer():
+    from desk.model import load_env
+
+    load_env()
+    if not os.environ.get("GEMINI_API_KEY"):
+        return None
+    from desk.model import GeminiModel
+
+    return GeminiModel()
+
+
 def create_app(
     conn: sqlite3.Connection | None = None,
     topics: list[Topic] | None = None,
     model=None,
+    reviewer=None,
 ) -> FastAPI:
     if conn is None:
         conn = _open_default()
@@ -43,10 +58,16 @@ def create_app(
     if topics is None:
         topics = _default_topics(conn)
 
+    if model is None:
+        model = _live_model()
+        if reviewer is None:
+            reviewer = _live_reviewer()
+
     application = FastAPI()
     application.state.conn = conn
     application.state.topics = topics
-    application.state.model = model or _live_model()
+    application.state.model = model
+    application.state.reviewer = reviewer
     application.state.sink = {"doc": [], "mailbox": [], "canonical": []}
 
     def render(request: Request, name: str, **context):
@@ -58,7 +79,7 @@ def create_app(
 
     @application.post("/questions")
     def post_question(question: str = Form("")):
-        handle_question(conn, question, application.state.model, topics)
+        handle_question(conn, question, application.state.model, topics, application.state.reviewer)
         return RedirectResponse("/", status_code=303)
 
     @application.post("/drafts/{draft_id}")
