@@ -21,22 +21,31 @@
         </nav>
         <div id="support-extras" class="hidden flex-col gap-6">
           <div class="pt-4 border-t border-sidebar-border flex flex-col gap-2 px-2">
-            <p class="font-headline text-title-md text-sidebar-text-active">Scheme desk</p>
-            <p class="font-body text-body-sm text-sidebar-text">Mutual Fund FAQ Assistant</p>
-            <p class="font-body text-label-md text-sidebar-text-active pt-2">On this desk</p>
-            <p class="font-body text-body-sm text-sidebar-text text-pretty">Questions you ask collect here. The one you have open stays on the right.</p>
+            <p class="font-body text-label-md text-sidebar-text-active">On this desk</p>
+            <p class="font-body text-body-sm text-sidebar-text text-pretty">Earlier chats stay in this list. The one you have open stays on the right.</p>
+          </div>
+          <div class="pt-4 border-t border-sidebar-border flex flex-col gap-2 px-2">
+            <p class="font-body text-label-md text-sidebar-text-active">Previous chats</p>
+            <p id="chat-list-empty" class="font-body text-body-sm text-sidebar-text">No earlier chats yet.</p>
+            <ul id="chat-list" class="flex flex-col divide-y divide-sidebar-border max-h-48 overflow-y-auto"></ul>
           </div>
           <div class="pt-4 border-t border-sidebar-border flex flex-col gap-2 px-2">
             <p class="font-body text-label-md text-sidebar-text-active">Example questions</p>
             <ul class="divide-y divide-sidebar-border flex flex-col">
               <li>
-                <button type="button" data-question="What is the expense ratio of HDFC Large Cap Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the expense ratio of HDFC Large Cap Fund Direct Growth?</button>
+                <button type="button" data-question="What is the expense ratio of SBI Large Cap Direct Plan Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the expense ratio of SBI Large Cap Direct Plan Growth?</button>
               </li>
               <li>
-                <button type="button" data-question="What is the exit load of HDFC Gold ETF Fund of Fund?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the exit load of HDFC Gold ETF Fund of Fund?</button>
+                <button type="button" data-question="What is the exit load of SBI Flexicap Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the exit load of SBI Flexicap Fund Direct Growth?</button>
               </li>
               <li>
-                <button type="button" data-question="What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?</button>
+                <button type="button" data-question="What is the minimum SIP for SBI ELSS Tax Saver Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the minimum SIP for SBI ELSS Tax Saver Fund Direct Growth?</button>
+              </li>
+              <li>
+                <button type="button" data-question="What is the exit load of SBI Contra Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the exit load of SBI Contra Fund Direct Growth?</button>
+              </li>
+              <li>
+                <button type="button" data-question="What is the expense ratio of SBI Small Midcap Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the expense ratio of SBI Small Midcap Fund Direct Growth?</button>
               </li>
             </ul>
           </div>
@@ -64,9 +73,19 @@
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            {% if pulse.week_options %}
+            <label class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-light-surface-container-low text-light-on-surface border border-light-outline">
+              <select id="week-select" aria-label="Choose a week" class="w-[10.25rem] bg-transparent border-0 py-0.5 pl-0.5 pr-7 font-body text-label-md text-light-on-surface focus:ring-0 cursor-pointer">
+                {% for option in pulse.week_options %}
+                <option value="{{ option.id }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            {% else %}
             <span class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-light-surface-container-low text-light-on-surface border border-light-outline">
               <span class="font-body text-label-md">{{ pulse.week_button }}</span>
             </span>
+            {% endif %}
           </div>
         </header>
 
@@ -106,7 +125,7 @@
             <h2 class="font-body text-label-md text-light-on-surface-variant">Corpus ({{ pulse.corpus_range }})</h2>
             <div class="flex flex-col gap-2">
               <p class="font-headline text-display-lg-mobile lg:text-display-lg text-light-on-surface tabular-nums">{{ pulse.corpus_count }}</p>
-              <p class="font-body text-body-sm text-light-on-surface-variant">Rolling synthesis corpus</p>
+              <p class="font-body text-body-sm text-light-on-surface-variant">{{ pulse.corpus_note }}</p>
               <div class="w-full h-1.5 rounded-full bg-light-surface-container overflow-hidden">
                 <div class="h-full rounded-full bg-accent" style="width: {{ pulse.corpus_fill }}%"></div>
               </div>
@@ -155,7 +174,7 @@
                 {% endfor %}
                 {% for bar in pulse.weeks.bars %}
                 {% if bar.current %}<text x="{{ bar.cx }}" y="{{ bar.y - 8 }}" text-anchor="middle" fill="#0F172A" font-size="12" font-weight="600" font-family="Instrument Sans">{{ bar.count }}</text>{% endif %}
-                <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}" rx="4" fill="#16A389"></rect>
+                <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}" rx="4" fill="{% if bar.current %}#0D7A67{% else %}#16A389{% endif %}"></rect>
                 <text x="{{ bar.cx }}" y="214" text-anchor="middle" fill="{% if bar.current %}#0F172A{% else %}#475569{% endif %}" font-size="11" {% if bar.current %}font-weight="600"{% endif %} font-family="Instrument Sans">{{ bar.label }}</text>
                 {% endfor %}
               </svg>
@@ -275,28 +294,22 @@
               <p class="font-body text-body-sm text-light-on-surface-variant">Scheme desk · Mutual Fund FAQ Assistant · Groww Customer Voice</p>
             </div>
           </div>
+          <button type="button" id="new-chat" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded bg-light-primary text-light-on-primary shrink-0">
+            <span class="font-body text-label-lg">New chat</span>
+          </button>
         </header>
         <section aria-label="Scheme desk Q&amp;A" class="flex-1 flex flex-col justify-between bg-light-surface-container-low border border-light-outline rounded-md overflow-hidden">
           <div class="p-page-margin flex flex-col gap-6 flex-1">
             <div class="max-w-2xl flex flex-col gap-2">
               <h2 class="font-headline text-headline-md text-light-on-surface">Ask a scheme question</h2>
-              <p class="font-body text-body-md text-light-on-surface-variant text-pretty">Ask about Large Cap, Mid Cap, Small Cap, Gold FoF, or Silver FoF. The draft, its source, and the reviewer verdict open in this column.</p>
+              <p class="font-body text-body-md text-light-on-surface-variant text-pretty">Ask a question the Groww pages on this desk cover. The answer and its source open in this column.</p>
               <p class="font-body text-label-md text-light-primary">Facts only. No investment advice.</p>
             </div>
-            <div id="answer-panel" class="hidden max-w-2xl bg-light-surface border border-light-outline rounded-md p-card-pad flex flex-col gap-3">
-              <div class="flex items-center justify-between gap-2">
-                <span id="answer-question" class="font-body text-title-sm text-light-on-surface"></span>
-                <span role="status" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-container text-success shrink-0">
-                  <span class="font-body text-label-sm">Verified fact</span>
-                </span>
-              </div>
-              <p id="answer-body" class="font-body text-body-md text-light-on-surface text-pretty"></p>
-              <p id="answer-source" class="font-mono text-mono-sm text-light-on-surface-variant"></p>
-            </div>
+            <div id="chat-thread" class="flex flex-col gap-4 overflow-y-auto max-h-[50vh] pr-1" aria-live="polite"></div>
           </div>
           <form id="scheme-form" class="border-t border-light-outline bg-light-surface-container-low p-card-pad flex flex-col gap-3">
             <label for="scheme-question-input" class="sr-only">Ask a scheme question</label>
-            <textarea id="scheme-question-input" rows="2" placeholder="Ask about exit load, expense ratio, or minimum SIP" class="w-full resize-none border-0 bg-transparent p-0 font-body text-body-md text-light-on-surface placeholder:text-light-on-surface-variant focus:ring-0"></textarea>
+            <textarea id="scheme-question-input" rows="2" placeholder="Ask about DP charges, exit load, expense ratio, or minimum SIP" class="w-full resize-none border-0 bg-transparent p-0 font-body text-body-md text-light-on-surface placeholder:text-light-on-surface-variant focus:ring-0"></textarea>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
               <p class="font-body text-body-sm text-light-on-surface-variant">Only a question is sent. Do not enter PAN, Aadhaar, account numbers, OTP, email, or phone.</p>
               <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded bg-light-primary text-light-on-primary shrink-0">
@@ -331,7 +344,18 @@
         btn.setAttribute("aria-selected", on ? "true" : "false");
       });
       var next = support ? "#support" : "#pulse";
-      if (location.hash !== next) history.replaceState(null, "", "/" + next);
+      if (location.hash !== next) {
+        var week = new URLSearchParams(location.search).get("week");
+        var path = week ? "/?week=" + encodeURIComponent(week) + next : "/" + next;
+        history.replaceState(null, "", path);
+      }
+    }
+
+    var weekSelect = document.getElementById("week-select");
+    if (weekSelect) {
+      weekSelect.addEventListener("change", function () {
+        location.href = "/?week=" + encodeURIComponent(weekSelect.value) + "#pulse";
+      });
     }
 
     document.querySelectorAll("[data-tab]").forEach(function (btn) {
@@ -347,45 +371,133 @@
       });
     });
 
-    var faqMap = {
-      "What is the expense ratio of HDFC Large Cap Fund Direct Growth?": {
-        body: "The Total Expense Ratio (TER) for HDFC Large Cap Fund – Direct Plan (Growth) is 0.96% p.a. as of the latest monthly factsheet.",
-        source: "Source: Scheme Information Document (SID) · Verified Aug 2026"
-      },
-      "What is the exit load of HDFC Gold ETF Fund of Fund?": {
-        body: "Exit load is 1% if redeemed or switched out within 15 days from the date of allotment; Nil after 15 days.",
-        source: "Source: Scheme Factsheet · Section: Load Structure"
-      },
-      "What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?": {
-        body: "The minimum Systematic Investment Plan (SIP) installment for HDFC Mid Cap Fund – Direct Plan (Growth) is ₹100 (and in multiples of ₹1 thereafter).",
-        source: "Source: Key Information Memorandum (KIM) · Verified Aug 2026"
-      }
-    };
+    var questionInput = document.getElementById("scheme-question-input");
+    var current = { id: String(Date.now()), title: "", turns: [] };
+    var saved = [];
 
-    function renderAnswer(question) {
-      var entry = faqMap[question] || {
-        body: "Draft prepared from the latest scheme factsheet. Confirm exit load, TER, and minimum SIP values against the current SID before sending to the customer.",
-        source: "Source: Mutual Fund Factsheet Index · Facts only"
-      };
-      document.getElementById("answer-question").textContent = question;
-      document.getElementById("answer-body").textContent = entry.body;
-      document.getElementById("answer-source").textContent = entry.source;
-      document.getElementById("answer-panel").classList.remove("hidden");
+    function renderThread() {
+      var thread = document.getElementById("chat-thread");
+      thread.replaceChildren();
+      current.turns.forEach(function (turn) {
+        var card = document.createElement("article");
+        card.className = "max-w-2xl bg-light-surface border border-light-outline rounded-md p-card-pad flex flex-col gap-3";
+        var row = document.createElement("div");
+        row.className = "flex items-start justify-between gap-2";
+        var question = document.createElement("p");
+        question.className = "font-body text-title-sm text-light-on-surface";
+        question.textContent = turn.question;
+        if (turn.source) {
+          var badge = document.createElement("span");
+          badge.className = "inline-flex items-center px-2 py-0.5 rounded bg-success-container text-success shrink-0";
+          badge.textContent = "Verified fact";
+          row.append(question, badge);
+        } else {
+          row.append(question);
+        }
+        var body = document.createElement("p");
+        body.className = "font-body text-body-md text-light-on-surface text-pretty";
+        body.textContent = turn.body;
+        var source = document.createElement("p");
+        source.className = "font-mono text-mono-sm text-light-on-surface-variant";
+        source.textContent = turn.source ? "Source: " + turn.source : "";
+        card.append(row, body, source);
+        thread.appendChild(card);
+      });
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function renderChatList() {
+      var list = document.getElementById("chat-list");
+      var empty = document.getElementById("chat-list-empty");
+      list.replaceChildren();
+      empty.classList.toggle("hidden", saved.length > 0);
+      saved.forEach(function (chat) {
+        var item = document.createElement("li");
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent";
+        button.textContent = chat.title;
+        button.addEventListener("click", function () { openChat(chat.id); });
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+    }
+
+    function archiveCurrent() {
+      if (!current.turns.length) return;
+      saved = saved.filter(function (chat) { return chat.id !== current.id; });
+      saved.unshift({
+        id: current.id,
+        title: current.title,
+        turns: current.turns.map(function (turn) { return Object.assign({}, turn); })
+      });
+    }
+
+    function addQuestion(question) {
+      if (!current.title) current.title = question;
+      var turn = { question: question, body: "Looking up the sources…", source: "" };
+      current.turns.push(turn);
+      questionInput.value = "";
+      renderThread();
+      var data = new FormData();
+      data.append("question", question);
+      fetch("/ui/ask", { method: "POST", body: data })
+        .then(function (response) { return response.json(); })
+        .then(function (payload) {
+          turn.body = payload.body || "Not covered.";
+          turn.source = payload.source || "";
+          renderThread();
+        })
+        .catch(function () {
+          turn.body = "The desk could not reach the sources.";
+          turn.source = "";
+          renderThread();
+        });
+    }
+
+    function newChat() {
+      archiveCurrent();
+      current = { id: String(Date.now()), title: "", turns: [] };
+      questionInput.value = "";
+      renderThread();
+      renderChatList();
+      showTab("support");
+    }
+
+    function openChat(id) {
+      var index = saved.findIndex(function (chat) { return chat.id === id; });
+      if (index < 0) return;
+      var picked = saved.splice(index, 1)[0];
+      archiveCurrent();
+      current = picked;
+      questionInput.value = "";
+      renderThread();
+      renderChatList();
+      showTab("support");
     }
 
     document.querySelectorAll(".example-question").forEach(function (btn) {
       btn.addEventListener("click", function () {
         showTab("support");
-        document.getElementById("scheme-question-input").value = btn.getAttribute("data-question");
-        renderAnswer(btn.getAttribute("data-question"));
+        addQuestion(btn.getAttribute("data-question"));
       });
+    });
+
+    questionInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        document.getElementById("scheme-form").requestSubmit();
+      }
     });
 
     document.getElementById("scheme-form").addEventListener("submit", function (event) {
       event.preventDefault();
-      var question = document.getElementById("scheme-question-input").value.trim();
-      if (question) renderAnswer(question);
+      var question = questionInput.value.trim();
+      if (question) addQuestion(question);
     });
+
+    document.getElementById("new-chat").addEventListener("click", newChat);
+    renderChatList();
 
     showTab(location.hash === "#support" ? "support" : "pulse");
   </script>

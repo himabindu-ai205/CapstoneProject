@@ -21,6 +21,8 @@ def test_twelve_urls_and_no_performance_left_in_chunks():
     scheme = conn.execute("SELECT text FROM corpus_chunks WHERE url = ?", (SCHEME_URL,)).fetchone()[0]
     assert "CAGR" not in scheme and "NAV" not in scheme and "18%" not in scheme
     assert "Expense ratio" in scheme
+    kept = strip_performance("Expense ratio\n0.85%\nExit load 1% if redeemed within 1 year. CAGR 12%.")
+    assert "0.85%" in kept and "Exit load" in kept and "12%" not in kept
     hits = search(conn, "DP charges levied")
     assert hits and hits[0]["url"] == DP_URL
     assert hits[0]["last_checked"] == "2026-11-13"

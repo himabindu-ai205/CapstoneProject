@@ -21,11 +21,27 @@ CORPUS_URLS = (
 )
 
 _PERCENT = re.compile(r"\d+(?:\.\d+)?\s*%")
+_STOP = frozenset(
+    """
+    how much the what is are for per and of does do can you your when where which
+    this that with from was were who why will about into than then them they our not
+    in on to it be or an at by if up as am we me my no so
+    """.split()
+)
+
+
+def content_words(query: str) -> list[str]:
+    return [
+        word.lower()
+        for word in re.findall(r"[A-Za-z0-9]+", query)
+        if len(word) > 1 and word.lower() not in _STOP
+    ]
 
 
 def strip_performance(text: str) -> str:
     kept = []
-    for part in re.split(r"[.!?]", text):
+    pieces = re.split(r"[\n]+|(?<!\d)[.!?](?:\s|$)|(?<=\d)[.!?](?=\s|$)", text)
+    for part in pieces:
         sentence = part.strip()
         if not sentence:
             continue
@@ -33,6 +49,11 @@ def strip_performance(text: str) -> str:
         if "cagr" in lowered or "nav" in lowered or "return" in lowered:
             continue
         if _PERCENT.search(sentence):
+            previous = kept[-1].lower() if kept else ""
+            labeled = "expense" in lowered or "exit load" in lowered
+            follows_label = previous in {"expense ratio", "exit load"} or previous.startswith("exit load")
+            if labeled or follows_label:
+                kept.append(sentence)
             continue
         kept.append(sentence)
     if not kept:
@@ -55,24 +76,38 @@ def build_corpus(conn: sqlite3.Connection, pages: list[tuple[str, str]], fetched
 
 
 def search(conn: sqlite3.Connection, query: str) -> list[dict]:
-    words = [word.lower() for word in re.findall(r"[A-Za-z0-9]+", query) if len(word) > 2]
-    hits = []
-    rows = conn.execute(
-        "SELECT id, url, title, text, last_checked FROM corpus_chunks ORDER BY id"
+    words = content_words(query)
+    if not words:
+        return []
+    rows = list(
+        conn.execute(
+            "SELECT id, url, title, text, last_checked FROM corpus_chunks ORDER BY id"
+        )
     )
-    for row in rows:
-        text = row[3]
-        if all(word in text.lower() for word in words):
-            hits.append(
-                {
-                    "id": row[0],
-                    "url": row[1],
-                    "title": row[2],
-                    "text": text,
-                    "last_checked": row[4],
-                }
-            )
-    return hits
+    docs = [(f"{row[1]} {row[2]}".lower(), f"{row[1]} {row[2]} {row[3]}".lower(), row) for row in rows]
+    idf = {}
+    for word in words:
+        found = sum(1 for _title, doc, _row in docs if word in doc)
+        idf[word] = 1 / found if found else 0
+    scored = []
+    for title, doc, row in docs:
+        present = [word for word in words if word in doc]
+        if not present:
+            continue
+        score = sum(idf[word] for word in present)
+        score += sum(1 for word in present if word in title)
+        scored.append((score, len(row[3]), row))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [
+        {
+            "id": row[0],
+            "url": row[1],
+            "title": row[2],
+            "text": row[3],
+            "last_checked": row[4],
+        }
+        for _score, _length, row in scored[:3]
+    ]
 
 
 def _page_text(url: str, html: str) -> str:

@@ -74,13 +74,26 @@ def create_app(
         return TEMPLATES.TemplateResponse(request, name, context)
 
     @application.get("/")
-    def home(request: Request):
-        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir()))
+    def home(request: Request, week: str = ""):
+        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir(), week or None))
 
     @application.post("/questions")
     def post_question(question: str = Form("")):
         handle_question(conn, question, application.state.model, topics, application.state.reviewer)
         return RedirectResponse("/", status_code=303)
+
+    @application.post("/ui/ask")
+    def ui_ask(question: str = Form("")):
+        try:
+            result = handle_question(
+                conn, question, application.state.model, topics, application.state.reviewer
+            )
+        except Exception:
+            return {
+                "body": "The desk could not complete that lookup. Try again in a moment.",
+                "source": "",
+            }
+        return {"body": result["body"], "source": result.get("citation_url") or ""}
 
     @application.post("/drafts/{draft_id}")
     def post_draft(

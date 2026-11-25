@@ -9,6 +9,7 @@ from desk.reviews import _keep_review
 from desk.schedule import CLOCK
 
 WINDOW_WEEKS = 4
+CORPUS_WEEKS = 4
 _THEMES = (
     ("Withdrawals & payouts", ("withdraw", "payout", "redeem")),
     ("Payments & UPI", ("upi", "payment")),
@@ -30,21 +31,22 @@ def default_data_dir() -> Path:
     return Path(__file__).resolve().parents[1] / "data"
 
 
-def build_pulse(data_dir: Path | None = None) -> dict:
+def build_pulse(data_dir: Path | None = None, week: str | None = None) -> dict:
     rows = _load(data_dir or default_data_dir())
     grouped: dict = defaultdict(list)
     for row in rows:
         grouped[_monday(row["created"])].append(row)
     if not grouped:
         return _empty()
-    pulse_monday = max(grouped)
+    latest = max(grouped)
+    window = [latest - timedelta(days=7 * (WINDOW_WEEKS - 1 - index)) for index in range(WINDOW_WEEKS)]
+    pulse_monday = _chosen(window, week)
     pulse_sunday = pulse_monday + timedelta(days=6)
-    corpus_monday = pulse_monday - timedelta(days=7 * (WINDOW_WEEKS - 1))
-    corpus_sunday = pulse_monday - timedelta(days=1)
-    corpus_weeks = [corpus_monday + timedelta(days=7 * index) for index in range(WINDOW_WEEKS - 1)]
+    corpus_weeks = _corpus_weeks(grouped, pulse_monday)
     chart_weeks = corpus_weeks + [pulse_monday]
     current_rows = _between(rows, pulse_monday, pulse_sunday)
-    corpus_rows = _between(rows, corpus_monday, corpus_sunday)
+    corpus_rows = [row for start in corpus_weeks for row in grouped.get(start, [])]
+    corpus_range, corpus_note = _corpus_label(corpus_weeks)
     this_rating = _round(_average(current_rows))
     baseline = _round(_average(corpus_rows))
     delta = None if this_rating is None or baseline is None else round(this_rating - baseline, 1)
@@ -60,7 +62,11 @@ def build_pulse(data_dir: Path | None = None) -> dict:
         "ready": bool(current_rows or corpus_rows),
         "subtitle": week_label,
         "week_button": week_label,
-        "synced": len(corpus_rows) + len(current_rows),
+        "week_options": [
+            {"id": start.isoformat(), "label": _range_label(start, start + timedelta(days=6)), "selected": start == pulse_monday}
+            for start in reversed(window)
+        ],
+        "synced": sum(len(grouped.get(start, [])) for start in window),
         "this_rating": _num(this_rating),
         "delta": delta,
         "delta_label": "—" if delta is None else f"{delta:+.1f} vs baseline",
@@ -68,12 +74,13 @@ def build_pulse(data_dir: Path | None = None) -> dict:
         "this_count": len(current_rows),
         "corpus_count": len(corpus_rows),
         "corpus_weeks": len(corpus_weeks),
-        "corpus_range": _range_label(corpus_monday, corpus_sunday),
+        "corpus_range": corpus_range,
+        "corpus_note": corpus_note,
         "chart_weeks": len(chart_weeks),
-        "corpus_fill": 100 if corpus_rows else 0,
+        "corpus_fill": round(100 * len(corpus_weeks) / CORPUS_WEEKS),
         "top": top,
-        "weeks": _volume(chart_weeks, grouped, corpus_weeks),
-        "ratings": _ratings(chart_weeks, grouped, baseline),
+        "weeks": _volume(chart_weeks, grouped, corpus_weeks, len(chart_weeks) - 1),
+        "ratings": _ratings(chart_weeks, grouped, baseline, len(chart_weeks) - 1),
         "themes": shown,
         "shares": [theme for theme in themes if theme["count"]],
         "week_total": len(current_rows),
@@ -185,11 +192,47 @@ def _empty() -> dict:
         "ready": False,
         "subtitle": "No reviews in the corpus",
         "week_button": "No week",
+        "week_options": [],
         "synced": 0,
     }
 
 
-def _volume(weeks: list, grouped: dict, baseline_weeks: list) -> dict:
+def _corpus_weeks(grouped: dict, pulse_monday) -> list:
+    found = []
+    for index in range(1, CORPUS_WEEKS + 1):
+        start = pulse_monday - timedelta(days=7 * index)
+        if grouped.get(start):
+            found.append(start)
+    found.reverse()
+    return found
+
+
+def _corpus_label(weeks: list) -> tuple[str, str]:
+    count = len(weeks)
+    if count == 0:
+        return "no earlier weeks", "No earlier weeks"
+    if count == 1:
+        note = "1 earlier week"
+    else:
+        note = f"{count} earlier weeks"
+    return _range_label(weeks[0], weeks[-1] + timedelta(days=6)), note
+
+
+def _chosen(window: list, week: str | None):
+    latest = window[-1]
+    if not week:
+        return latest
+    try:
+        day = datetime.fromisoformat(week).date()
+    except ValueError:
+        return latest
+    monday = day - timedelta(days=day.weekday())
+    if monday not in window:
+        return latest
+    return monday
+
+
+def _volume(weeks: list, grouped: dict, baseline_weeks: list, current_index: int) -> dict:
     counts = [len(grouped.get(start, [])) for start in weeks]
     baseline_counts = [len(grouped.get(start, [])) for start in baseline_weeks]
     peak = max(counts) if counts else 0
@@ -213,7 +256,7 @@ def _volume(weeks: list, grouped: dict, baseline_weeks: list) -> dict:
                 "h": round(height, 1),
                 "w": round(bar_w, 1),
                 "cx": round(x + bar_w / 2, 1),
-                "current": index == len(weeks) - 1,
+                "current": index == current_index,
             }
         )
     baseline_y = round(bottom - plot_h * average / ymax, 1) if ymax else bottom
@@ -229,7 +272,7 @@ def _range_label(start, end) -> str:
     return f"{_day(start)} {start.year} – {_day(end)} {end.year}"
 
 
-def _ratings(weeks: list, grouped: dict, baseline: float | None) -> dict:
+def _ratings(weeks: list, grouped: dict, baseline: float | None, current_index: int) -> dict:
     left, right, bottom, top = 36, 346, 116, 20
     plot_h = bottom - top
     step = (right - left) / (len(weeks) - 1) if len(weeks) > 1 else 0
@@ -238,11 +281,11 @@ def _ratings(weeks: list, grouped: dict, baseline: float | None) -> dict:
     for index, start in enumerate(weeks):
         rating = _average(grouped.get(start, []))
         x = left if len(weeks) == 1 else left + index * step
-        labels.append({"label": _day(start), "x": round(x, 1), "current": index == len(weeks) - 1})
+        labels.append({"label": _day(start), "x": round(x, 1), "current": index == current_index})
         if rating is None:
             continue
         y = bottom - plot_h * (rating / 5)
-        points.append({"x": round(x, 1), "y": round(y, 1), "rating": _num(_round(rating)), "current": index == len(weeks) - 1})
+        points.append({"x": round(x, 1), "y": round(y, 1), "rating": _num(_round(rating)), "current": index == current_index})
     line = " ".join(f"{point['x']},{point['y']}" for point in points)
     area = ""
     if points:

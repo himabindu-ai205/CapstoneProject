@@ -1,4 +1,5 @@
 import hashlib
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -8,6 +9,7 @@ from desk.guards import redact, scope_flag, sentence_count
 from desk.intent import REFUSALS, classify_intent
 from desk.recurrence import record
 from desk.reviews import WINDOW_END, WINDOW_START
+from desk.corpus import content_words
 from desk.tools import corpus_search, reviews_query
 from desk.topics import Topic, assign_topic
 
@@ -95,14 +97,24 @@ def _official_agent(conn: sqlite3.Connection, query: str, model: ModelClient) ->
     hits = corpus_search(conn, query)
     urls = [hit["url"] for hit in hits]
     prompt = query if not urls else (
-        "Use GROUNDED::<url>::<one sentence> with a url copied from this list, or NOT_COVERED.\n"
-        f"{query}\n{' '.join(urls)}"
+        "Use GROUNDED::<url>::<one sentence copied from that page>, or NOT_COVERED.\n"
+        f"{query}\n" + "\n".join(f"{hit['url']} {_best_line(query, hit['text'])}" for hit in hits)
     )
     raw = model.complete(prompt)
+    page_url, page_sentence = _best_supported(query, hits) if hits else ("", "")
+    needed = [word for word in content_words(query) if word in page_sentence.lower()]
     grounded = _grounded_sentence(raw, urls)
     if grounded is not None:
         url, sentence = grounded
-        return {"body": sentence, "citation_url": url, "hits": hits, "covered": True}
+        if (
+            url == page_url
+            and _supported(sentence, hits)
+            and _covers(sentence, needed)
+            and len(sentence) <= len(page_sentence) + 80
+        ):
+            return {"body": sentence, "citation_url": url, "hits": hits, "covered": True}
+    if hits:
+        return {"body": page_sentence, "citation_url": page_url, "hits": hits, "covered": True}
     titles = _titles(conn, hits)
     body = f"Not covered. Searched: {query}. Pages: {', '.join(titles)}."
     return {"body": body, "citation_url": None, "hits": hits, "covered": False}
@@ -256,6 +268,76 @@ def _grounded_sentence(raw: str, urls: list[str]) -> tuple[str, str] | None:
     if url not in urls:
         return None
     return url, sentence
+
+
+def _best_line(query: str, text: str) -> str:
+    words = content_words(query)
+    lines = [line.strip() for line in re.split(r"[\n]+|(?<!\d)\.(?!\d)", text) if line.strip()]
+    if not lines:
+        return " ".join(text.split())[:400]
+
+    def score(line: str) -> float:
+        lowered = line.lower()
+        matched = [word for word in words if word in lowered]
+        if not matched:
+            return 0
+        total = 0.0
+        for word in matched:
+            freq = sum(1 for other in lines if word in other.lower())
+            total += 1 / freq
+        return total
+
+    def has_figure(i: int) -> bool:
+        blob = lines[i] if i + 1 >= len(lines) else f"{lines[i]} {lines[i + 1]}"
+        return bool(re.search(r"\d|₹|%", blob))
+
+    numbered = [i for i in range(len(lines)) if score(lines[i]) and has_figure(i)]
+    pool = numbered or list(range(len(lines)))
+    index = max(pool, key=lambda i: (score(lines[i]), -i))
+    window = []
+    if index > 0 and (score(lines[index - 1]) or lines[index - 1].endswith(":")):
+        window.append(lines[index - 1])
+    window.append(lines[index])
+    for line in lines[index + 1 : index + 8]:
+        lowered = line.lower()
+        if "cagr" in lowered or "nav" in lowered or "return" in lowered:
+            break
+        if score(line) == 0 and not re.search(r"\d|₹|%", line):
+            break
+        window.append(line)
+        if len(" ".join(window)) > 420:
+            break
+    gst_line = next(
+        (
+            line
+            for line in lines[index : index + 12]
+            if "gst" in line.lower() and re.search(r"\d", line)
+        ),
+        "",
+    )
+    if gst_line and gst_line not in window:
+        window.append(gst_line)
+    return " ".join(window)[:500]
+
+
+def _covers(sentence: str, words: list[str]) -> bool:
+    lowered = sentence.lower()
+    return all(word in lowered for word in words)
+
+
+def _best_supported(query: str, hits: list[dict]) -> tuple[str, str]:
+    hit = hits[0]
+    return hit["url"], _best_line(query, hit["text"])
+
+
+def _supported(sentence: str, hits: list[dict]) -> bool:
+    needle = " ".join(sentence.lower().split())
+    if not needle:
+        return False
+    for hit in hits:
+        if needle in " ".join(hit["text"].lower().split()):
+            return True
+    return False
 
 
 def _titles(conn: sqlite3.Connection, hits: list[dict]) -> list[str]:
