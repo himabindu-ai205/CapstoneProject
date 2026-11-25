@@ -9,16 +9,38 @@
           </span>
           <span class="font-headline text-title-md text-sidebar-text-active">Groww Pulse</span>
         </div>
-        <nav aria-label="Primary" class="flex flex-col gap-1">
-          <a href="/ui/pulse" aria-current="page" class="flex items-center gap-2.5 px-3 py-2 rounded bg-sidebar-active text-sidebar-text-active font-body text-label-lg">
+        <nav aria-label="Primary" class="flex flex-col gap-1" role="tablist">
+          <button type="button" data-tab="pulse" role="tab" aria-selected="true" aria-controls="panel-pulse" class="tab-btn flex items-center gap-2.5 px-3 py-2 rounded bg-sidebar-active text-sidebar-text-active font-body text-label-lg text-left">
             <span class="material-symbols-outlined text-title-md" aria-hidden="true">space_dashboard</span>
             <span>Weekly Product Pulse</span>
-          </a>
-          <a href="/ui/support" class="flex items-center gap-2.5 px-3 py-2 rounded text-sidebar-text hover:text-sidebar-text-active hover:bg-sidebar-active font-body text-body-md">
+          </button>
+          <button type="button" data-tab="support" role="tab" aria-selected="false" aria-controls="panel-support" class="tab-btn flex items-center gap-2.5 px-3 py-2 rounded text-sidebar-text hover:text-sidebar-text-active hover:bg-sidebar-active font-body text-body-md text-left">
             <span class="material-symbols-outlined text-title-md" aria-hidden="true">support_agent</span>
             <span>Customer support</span>
-          </a>
+          </button>
         </nav>
+        <div id="support-extras" class="hidden flex-col gap-6">
+          <div class="pt-4 border-t border-sidebar-border flex flex-col gap-2 px-2">
+            <p class="font-headline text-title-md text-sidebar-text-active">Scheme desk</p>
+            <p class="font-body text-body-sm text-sidebar-text">Mutual Fund FAQ Assistant</p>
+            <p class="font-body text-label-md text-sidebar-text-active pt-2">On this desk</p>
+            <p class="font-body text-body-sm text-sidebar-text text-pretty">Questions you ask collect here. The one you have open stays on the right.</p>
+          </div>
+          <div class="pt-4 border-t border-sidebar-border flex flex-col gap-2 px-2">
+            <p class="font-body text-label-md text-sidebar-text-active">Example questions</p>
+            <ul class="divide-y divide-sidebar-border flex flex-col">
+              <li>
+                <button type="button" data-question="What is the expense ratio of HDFC Large Cap Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the expense ratio of HDFC Large Cap Fund Direct Growth?</button>
+              </li>
+              <li>
+                <button type="button" data-question="What is the exit load of HDFC Gold ETF Fund of Fund?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the exit load of HDFC Gold ETF Fund of Fund?</button>
+              </li>
+              <li>
+                <button type="button" data-question="What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?" class="example-question w-full text-left py-2.5 font-body text-body-sm text-sidebar-text-active hover:text-accent">What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?</button>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
       <div class="px-2 pt-4 border-t border-sidebar-border flex flex-col gap-1">
         <div class="flex items-center gap-2">
@@ -30,10 +52,10 @@
     </aside>
 
     <main class="flex-1 min-w-0 p-gutter-lg lg:p-page-margin">
-      <div class="max-w-7xl mx-auto flex flex-col gap-gutter-xl">
+      <div id="panel-pulse" role="tabpanel" class="max-w-7xl mx-auto flex flex-col gap-gutter-xl">
         <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-gutter-lg">
           <div class="flex items-center gap-3">
-            <button type="button" id="nav-toggle" aria-label="Open navigation menu" class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded bg-light-surface-container-low text-light-on-surface border border-light-outline">
+            <button type="button" class="nav-toggle lg:hidden inline-flex items-center justify-center w-9 h-9 rounded bg-light-surface-container-low text-light-on-surface border border-light-outline" aria-label="Open navigation menu">
               <span class="material-symbols-outlined text-title-md" aria-hidden="true">menu</span>
             </button>
             <div>
@@ -242,14 +264,129 @@
         </section>
         {% endif %}
       </div>
+      <div id="panel-support" role="tabpanel" class="hidden max-w-7xl w-full mx-auto flex-1 flex-col gap-gutter-xl">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-gutter-lg">
+          <div class="flex items-center gap-3">
+            <button type="button" class="nav-toggle lg:hidden inline-flex items-center justify-center w-9 h-9 rounded bg-light-surface-container-low text-light-on-surface border border-light-outline" aria-label="Open navigation menu">
+              <span class="material-symbols-outlined text-title-md" aria-hidden="true">menu</span>
+            </button>
+            <div>
+              <h1 class="font-headline text-headline-lg text-light-on-surface text-balance">Customer support</h1>
+              <p class="font-body text-body-sm text-light-on-surface-variant">Scheme desk · Mutual Fund FAQ Assistant · Groww Customer Voice</p>
+            </div>
+          </div>
+        </header>
+        <section aria-label="Scheme desk Q&amp;A" class="flex-1 flex flex-col justify-between bg-light-surface-container-low border border-light-outline rounded-md overflow-hidden">
+          <div class="p-page-margin flex flex-col gap-6 flex-1">
+            <div class="max-w-2xl flex flex-col gap-2">
+              <h2 class="font-headline text-headline-md text-light-on-surface">Ask a scheme question</h2>
+              <p class="font-body text-body-md text-light-on-surface-variant text-pretty">Ask about Large Cap, Mid Cap, Small Cap, Gold FoF, or Silver FoF. The draft, its source, and the reviewer verdict open in this column.</p>
+              <p class="font-body text-label-md text-light-primary">Facts only. No investment advice.</p>
+            </div>
+            <div id="answer-panel" class="hidden max-w-2xl bg-light-surface border border-light-outline rounded-md p-card-pad flex flex-col gap-3">
+              <div class="flex items-center justify-between gap-2">
+                <span id="answer-question" class="font-body text-title-sm text-light-on-surface"></span>
+                <span role="status" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-container text-success shrink-0">
+                  <span class="font-body text-label-sm">Verified fact</span>
+                </span>
+              </div>
+              <p id="answer-body" class="font-body text-body-md text-light-on-surface text-pretty"></p>
+              <p id="answer-source" class="font-mono text-mono-sm text-light-on-surface-variant"></p>
+            </div>
+          </div>
+          <form id="scheme-form" class="border-t border-light-outline bg-light-surface-container-low p-card-pad flex flex-col gap-3">
+            <label for="scheme-question-input" class="sr-only">Ask a scheme question</label>
+            <textarea id="scheme-question-input" rows="2" placeholder="Ask about exit load, expense ratio, or minimum SIP" class="w-full resize-none border-0 bg-transparent p-0 font-body text-body-md text-light-on-surface placeholder:text-light-on-surface-variant focus:ring-0"></textarea>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+              <p class="font-body text-body-sm text-light-on-surface-variant">Only a question is sent. Do not enter PAN, Aadhaar, account numbers, OTP, email, or phone.</p>
+              <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded bg-light-primary text-light-on-primary shrink-0">
+                <span class="font-body text-label-lg">Ask</span>
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
     </main>
   </div>
   <script>
-    document.getElementById("nav-toggle").addEventListener("click", function () {
-      var sidebar = document.getElementById("sidebar");
-      sidebar.classList.toggle("hidden");
-      sidebar.classList.toggle("flex");
-      sidebar.classList.toggle("flex-col");
+    function setShown(el, show) {
+      el.classList.toggle("hidden", !show);
+      el.classList.toggle("flex", show);
+    }
+
+    function showTab(name) {
+      var support = name === "support";
+      setShown(document.getElementById("panel-pulse"), !support);
+      setShown(document.getElementById("panel-support"), support);
+      var extras = document.getElementById("support-extras");
+      extras.classList.toggle("hidden", !support);
+      extras.classList.toggle("flex", support);
+      document.querySelectorAll("[data-tab]").forEach(function (btn) {
+        var on = btn.getAttribute("data-tab") === (support ? "support" : "pulse");
+        btn.classList.toggle("bg-sidebar-active", on);
+        btn.classList.toggle("text-sidebar-text-active", on);
+        btn.classList.toggle("text-label-lg", on);
+        btn.classList.toggle("text-sidebar-text", !on);
+        btn.classList.toggle("text-body-md", !on);
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      var next = support ? "#support" : "#pulse";
+      if (location.hash !== next) history.replaceState(null, "", "/ui" + next);
+    }
+
+    document.querySelectorAll("[data-tab]").forEach(function (btn) {
+      btn.addEventListener("click", function () { showTab(btn.getAttribute("data-tab")); });
     });
+
+    document.querySelectorAll(".nav-toggle").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("hidden");
+        sidebar.classList.toggle("flex");
+        sidebar.classList.toggle("flex-col");
+      });
+    });
+
+    var faqMap = {
+      "What is the expense ratio of HDFC Large Cap Fund Direct Growth?": {
+        body: "The Total Expense Ratio (TER) for HDFC Large Cap Fund – Direct Plan (Growth) is 0.96% p.a. as of the latest monthly factsheet.",
+        source: "Source: Scheme Information Document (SID) · Verified Aug 2026"
+      },
+      "What is the exit load of HDFC Gold ETF Fund of Fund?": {
+        body: "Exit load is 1% if redeemed or switched out within 15 days from the date of allotment; Nil after 15 days.",
+        source: "Source: Scheme Factsheet · Section: Load Structure"
+      },
+      "What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?": {
+        body: "The minimum Systematic Investment Plan (SIP) installment for HDFC Mid Cap Fund – Direct Plan (Growth) is ₹100 (and in multiples of ₹1 thereafter).",
+        source: "Source: Key Information Memorandum (KIM) · Verified Aug 2026"
+      }
+    };
+
+    function renderAnswer(question) {
+      var entry = faqMap[question] || {
+        body: "Draft prepared from the latest scheme factsheet. Confirm exit load, TER, and minimum SIP values against the current SID before sending to the customer.",
+        source: "Source: Mutual Fund Factsheet Index · Facts only"
+      };
+      document.getElementById("answer-question").textContent = question;
+      document.getElementById("answer-body").textContent = entry.body;
+      document.getElementById("answer-source").textContent = entry.source;
+      document.getElementById("answer-panel").classList.remove("hidden");
+    }
+
+    document.querySelectorAll(".example-question").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        showTab("support");
+        document.getElementById("scheme-question-input").value = btn.getAttribute("data-question");
+        renderAnswer(btn.getAttribute("data-question"));
+      });
+    });
+
+    document.getElementById("scheme-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      var question = document.getElementById("scheme-question-input").value.trim();
+      if (question) renderAnswer(question);
+    });
+
+    showTab(location.hash === "#support" ? "support" : "pulse");
   </script>
 </body></html>

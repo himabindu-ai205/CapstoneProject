@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from desk.approval import decide, execute
@@ -125,15 +125,17 @@ def create_app(
     def explainers(request: Request):
         return render(request, "explainers.html", page="explainers", rows=_canonical(conn))
 
-    ui = Path(__file__).resolve().parent / "static" / "ui"
+    @application.get("/ui")
+    def ui_home(request: Request):
+        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir()))
 
     @application.get("/ui/pulse")
-    def ui_pulse(request: Request):
-        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir()))
+    def ui_pulse():
+        return RedirectResponse("/ui#pulse", status_code=302)
 
     @application.get("/ui/support")
     def ui_support():
-        return FileResponse(ui / "support.html")
+        return RedirectResponse("/ui#support", status_code=302)
 
     return application
 
