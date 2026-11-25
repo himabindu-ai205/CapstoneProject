@@ -62,3 +62,15 @@ def test_reviewer_uses_gemini_flags_and_refusals_skip_it(conn, topics):
     refused = FlagModel()
     handle_question(conn, "What is the NAV of SBI Large Cap?", ScriptedModel(), topics, refused)
     assert refused.calls == 0
+
+
+def test_depository_rate_names_men_and_women():
+    from desk.response import _state_men_and_women
+
+    body = _state_men_and_women(
+        "₹3.5 per sell transaction ₹3.25 per sell transaction for women "
+        "Groww Charges: ₹16.5 per sell transaction An 18% GST applies to the total of Depository and Groww charges"
+    )
+    assert body.startswith("₹3.5 per sell transaction for men and ₹3.25 per sell transaction for women.")
+    assert "Groww charges ₹16.5 per sell transaction" in body
+    assert "18% GST" in body

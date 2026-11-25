@@ -7,6 +7,11 @@ def test_intent_order_pii_before_performance():
     assert classify_intent("Should I buy SBI Large Cap?") == "advice"
     assert classify_intent("What is the CAGR of this fund?") == "performance"
     assert classify_intent("When are DP charges levied?") == "factual"
+    assert classify_intent("When are DP charges levied on a sell?") == "factual"
+    assert classify_intent("How much is the DP charge per sell?") == "factual"
+    assert classify_intent("Do DP charges apply every time I sell shares?") == "factual"
+    assert classify_intent("Should I sell this fund?") == "advice"
+    assert classify_intent("Sell this fund") == "advice"
     assert REFUSALS["performance"].startswith("This desk states")
     assert "NAV" not in REFUSALS["performance"]
 

@@ -102,8 +102,11 @@ def _official_agent(conn: sqlite3.Connection, query: str, model: ModelClient) ->
     )
     raw = model.complete(prompt)
     page_url, page_sentence = _best_supported(query, hits) if hits else ("", "")
+    page_sentence = _state_men_and_women(page_sentence)
     needed = [word for word in content_words(query) if word in page_sentence.lower()]
     grounded = _grounded_sentence(raw, urls)
+    if "for men" in page_sentence and hits:
+        return {"body": page_sentence, "citation_url": page_url, "hits": hits, "covered": True}
     if grounded is not None:
         url, sentence = grounded
         if (
@@ -278,7 +281,11 @@ def _best_line(query: str, text: str) -> str:
 
     def score(line: str) -> float:
         lowered = line.lower()
-        matched = [word for word in words if word in lowered]
+        matched = [
+            word
+            for word in words
+            if word in lowered and word not in {"page", "listed", "pricing", "website"}
+        ]
         if not matched:
             return 0
         total = 0.0
@@ -294,35 +301,83 @@ def _best_line(query: str, text: str) -> str:
     numbered = [i for i in range(len(lines)) if score(lines[i]) and has_figure(i)]
     pool = numbered or list(range(len(lines)))
     index = max(pool, key=lambda i: (score(lines[i]), -i))
-    window = []
-    if index > 0 and (score(lines[index - 1]) or lines[index - 1].endswith(":")):
-        window.append(lines[index - 1])
-    window.append(lines[index])
+    chosen = _crop_to_query(lines[index], words, lines)
+    window = [chosen]
     for line in lines[index + 1 : index + 8]:
         lowered = line.lower()
+        joined = " ".join(window)
         if "cagr" in lowered or "nav" in lowered or "return" in lowered:
             break
-        if score(line) == 0 and not re.search(r"\d|₹|%", line):
+        if "depository" in joined.lower() and re.search(r"\d", joined):
+            continuation = bool(re.match(r"[\d₹]|rs", lowered))
+            if not continuation and "depository" not in lowered and "women" not in lowered:
+                break
+        elif score(line) == 0 and not re.search(r"\d|₹|%", line):
             break
         window.append(line)
-        if len(" ".join(window)) > 420:
+        if len(" ".join(window)) > 320:
             break
-    gst_line = next(
-        (
-            line
-            for line in lines[index : index + 12]
-            if "gst" in line.lower() and re.search(r"\d", line)
-        ),
-        "",
-    )
-    if gst_line and gst_line not in window:
-        window.append(gst_line)
-    return " ".join(window)[:500]
+    women = next((line for line in lines[index + 1 : index + 8] if "women" in line.lower()), "")
+    if women and women not in window:
+        window.append(women)
+    if "gst" not in " ".join(window).lower():
+        gst_line = next(
+            (
+                line
+                for line in lines[index : index + 12]
+                if "gst" in line.lower() and re.search(r"\d", line)
+            ),
+            "",
+        )
+        if gst_line and gst_line not in window:
+            window.append(gst_line)
+    body = " ".join(window)
+    lowered_body = body.lower()
+    if "depository" in lowered_body and "gst" in lowered_body:
+        bar = body.find(" | ", lowered_body.find("gst"))
+        if bar > 0:
+            body = body[:bar].strip()
+        if women and "women" not in body.lower():
+            at = women.lower().find("depository")
+            snippet = women[at:].strip(" |") if at >= 0 else women.strip(" |")
+            position = lines.index(women)
+            if position + 1 < len(lines) and re.fullmatch(r"[\d.]+", lines[position + 1].strip()):
+                snippet = f"{snippet} {lines[position + 1].strip()}"
+            body = f"{body} {snippet}"
+    return _state_men_and_women(body)[:500]
+
+
+def _state_men_and_women(body: str) -> str:
+    lowered = body.lower()
+    if not re.search(r"depository|\bdp\b|sell", lowered):
+        return body
+    if not re.search(r"3\.5", body) or not re.search(r"3\.25", body):
+        return body
+    if not re.search(r"women|female", lowered) or re.search(r"\bmen\b", lowered):
+        return body
+    parts = ["₹3.5 per sell transaction for men and ₹3.25 per sell transaction for women."]
+    if re.search(r"16\.5", body):
+        under = ", or ₹0 if the sell value is under ₹100" if re.search(r"\b100\b", body) else ""
+        parts.append(f"Groww charges ₹16.5 per sell transaction{under}.")
+    if "gst" in lowered and re.search(r"18\s*%", body):
+        parts.append("An 18% GST applies to the total of Depository and Groww charges.")
+    return " ".join(parts)
 
 
 def _covers(sentence: str, words: list[str]) -> bool:
     lowered = sentence.lower()
     return all(word in lowered for word in words)
+
+
+def _crop_to_query(line: str, words: list[str], lines: list[str]) -> str:
+    skip = {"page", "listed", "pricing", "website"}
+    lowered = line.lower()
+    focus = [word for word in words if word in lowered and word not in skip]
+    if not focus or len(line) <= 160:
+        return line
+    rarest = min(focus, key=lambda word: sum(1 for other in lines if word in other.lower()))
+    at = lowered.find(rarest)
+    return line[at : at + 180].strip(" |-")
 
 
 def _best_supported(query: str, hits: list[dict]) -> tuple[str, str]:

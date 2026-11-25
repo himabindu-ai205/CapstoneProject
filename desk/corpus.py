@@ -94,8 +94,9 @@ def search(conn: sqlite3.Connection, query: str) -> list[dict]:
         present = [word for word in words if word in doc]
         if not present:
             continue
-        score = sum(idf[word] for word in present)
-        score += sum(1 for word in present if word in title)
+        title_hits = [word for word in present if word in title]
+        body_only = [word for word in present if word not in title]
+        score = sum(idf[word] for word in title_hits) * 5 + sum(idf[word] for word in body_only) * 0.25
         scored.append((score, len(row[3]), row))
     scored.sort(key=lambda item: (-item[0], item[1]))
     return [

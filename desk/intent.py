@@ -25,6 +25,13 @@ REFUSALS = {
 }
 
 
+def _charge_on_a_sell(lowered: str) -> bool:
+    if re.search(r"\bsell (?:this|my|the fund|these|it)\b", lowered):
+        return False
+    about_charges = re.search(r"\b(?:dp|charge|charges|fee|fees|levied|levy|brokerage|gst)\b", lowered)
+    return bool(about_charges and re.search(r"\bsell\b", lowered))
+
+
 def classify_intent(text: str) -> str:
     if _PAN.search(text) or _PHONE.search(text) or _ACCOUNT.search(text):
         return "pii"
@@ -33,7 +40,7 @@ def classify_intent(text: str) -> str:
         return "advice"
     if re.search(r"\bbuy\b", lowered) or re.search(r"\bhold\b", lowered):
         return "advice"
-    if re.search(r"\bsell\b", lowered) and "per sell" not in lowered:
+    if re.search(r"\bsell\b", lowered) and not _charge_on_a_sell(lowered):
         return "advice"
     if any(phrase in lowered for phrase in _PERFORMANCE):
         return "performance"
