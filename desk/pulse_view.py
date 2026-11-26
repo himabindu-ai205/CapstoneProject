@@ -84,6 +84,7 @@ def build_pulse(data_dir: Path | None = None, week: str | None = None) -> dict:
         "themes": shown,
         "shares": [theme for theme in themes if theme["count"]],
         "week_total": len(current_rows),
+        "signals": [],
     }
 
 
@@ -194,6 +195,7 @@ def _empty() -> dict:
         "week_button": "No week",
         "week_options": [],
         "synced": 0,
+        "signals": [],
     }
 
 

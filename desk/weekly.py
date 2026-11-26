@@ -27,17 +27,21 @@ def run_weekly(
     reviews = reviews_query(conn, window_start, window_end)
     groups = _group(reviews, topics)
     ranked = sorted(groups.items(), key=lambda item: (-len(item[1]), item[0]))[:5]
-    signals = read_signals(conn)
+    signals = [
+        signal
+        for signal in read_signals(conn)
+        if signal["window_start"] == window_start and signal["window_end"] == window_end
+    ]
     labels = {topic.id: topic.label for topic in topics}
 
     explainer_id = None
     blocks = []
     for signal in signals:
         if signal["topic"].startswith("fees."):
-            opened = _open_explainer(conn, signal, groups.get(signal["topic"], []), labels)
-            blocks.append(opened["block"])
-            if explainer_id is None:
-                explainer_id = opened["id"]
+            opened_id = _ensure_explainer(conn, signal, groups.get(signal["topic"], []), labels)
+            blocks.append(_signal_block(signal, signal["confusion_summary"]))
+            if explainer_id is None and opened_id:
+                explainer_id = opened_id
         else:
             blocks.append(_signal_block(signal, signal["confusion_summary"]))
 
@@ -75,7 +79,7 @@ def run_weekly(
         propose(conn, "email_draft", "product@groww", body),
     ]
     if explainer_id is not None:
-        action_ids.append(propose(conn, "promote_explainer", named, explainer_id))
+        action_ids.append(_propose_explainer(conn, named, explainer_id))
     return {
         "pulse_id": pulse_id,
         "action_ids": action_ids,
@@ -89,6 +93,52 @@ def _group(reviews: list[dict], topics: list[Topic]) -> dict[str, list[dict]]:
     for review in reviews:
         groups[assign_topic(review["quote"], topics)].append(review)
     return groups
+
+
+def sync_fee_explainers(conn, topics: list[Topic]) -> list[str]:
+    labels = {topic.id: topic.label for topic in topics}
+    opened = []
+    for signal in read_signals(conn):
+        if not _short_fee(signal["topic"]):
+            continue
+        explainer_id = _ensure_explainer(conn, signal, [], labels)
+        if explainer_id:
+            _propose_explainer(conn, signal["topic"], explainer_id)
+            opened.append(explainer_id)
+    return opened
+
+
+def _short_fee(topic: str) -> bool:
+    return topic.startswith("fees.") and len(topic) <= 32
+
+
+def _ensure_explainer(conn, signal: dict, reviews: list[dict], labels: dict[str, str]) -> str | None:
+    existing = conn.execute(
+        """
+        SELECT id FROM explainers
+        WHERE signal_id = ? OR (topic = ? AND status IN ('pending', 'canonical'))
+        LIMIT 1
+        """,
+        (signal["id"], signal["topic"]),
+    ).fetchone()
+    if existing:
+        return existing[0]
+    if not _short_fee(signal["topic"]):
+        return None
+    return _open_explainer(conn, signal, reviews, labels)["id"]
+
+
+def _propose_explainer(conn, topic: str, explainer_id: str) -> str:
+    existing = conn.execute(
+        """
+        SELECT id FROM approval_actions
+        WHERE kind = 'promote_explainer' AND payload = ? AND status != 'rejected'
+        """,
+        (explainer_id,),
+    ).fetchone()
+    if existing:
+        return existing[0]
+    return propose(conn, "promote_explainer", topic, explainer_id)
 
 
 def _open_explainer(conn, signal: dict, reviews: list[dict], labels: dict[str, str]) -> dict:
@@ -123,7 +173,7 @@ def _open_explainer(conn, signal: dict, reviews: list[dict], labels: dict[str, s
         urls[0] if urls else None,
         urls[1] if len(urls) > 1 else None,
         supporting[0]["last_checked"] if supporting else None,
-        _reply_text(sentences),
+        _reply_from_pages(supporting, sentences),
         None if len(urls) >= 2 else "ungrounded",
     )
     return {"id": explainer_id, "block": _signal_block(signal, what)}
@@ -192,6 +242,16 @@ def _pulse_body(
 
 def _sentences(text: str) -> list[str]:
     return [" ".join(part.split()) for part in re.split(r"[.!?]", text) if part.strip()]
+
+
+def _reply_from_pages(supporting: list[dict], sentences: list[str]) -> str:
+    from desk.response import _state_men_and_women
+
+    blob = " ".join(hit["text"] for hit in supporting)
+    stated = _state_men_and_women(blob)
+    if stated != blob:
+        return stated
+    return _reply_text(sentences)
 
 
 def _reply_text(sentences: list[str]) -> str:

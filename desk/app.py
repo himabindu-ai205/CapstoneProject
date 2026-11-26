@@ -77,6 +77,12 @@ def create_app(
                 build_live(conn, http_get, datetime.now(CLOCK).date().isoformat())
             except Exception:
                 pass
+        try:
+            from desk.weekly import sync_fee_explainers
+
+            sync_fee_explainers(conn, topics)
+        except Exception:
+            pass
         yield
 
     application = FastAPI(lifespan=lifespan)
@@ -91,7 +97,9 @@ def create_app(
 
     @application.get("/")
     def home(request: Request, week: str = ""):
-        return render(request, "ui_pulse.html", pulse=build_pulse(default_data_dir(), week or None))
+        pulse = build_pulse(default_data_dir(), week or None)
+        pulse["signals"] = _support_signals(conn, *_live_window())
+        return render(request, "ui_pulse.html", pulse=pulse)
 
     @application.post("/questions")
     def post_question(question: str = Form("")):
@@ -109,7 +117,12 @@ def create_app(
                 "body": "The desk could not complete that lookup. Try again in a moment.",
                 "source": "",
             }
-        return {"body": result["body"], "source": result.get("citation_url") or ""}
+        return {
+            "body": result["body"],
+            "source": result.get("citation_url") or "",
+            "reused": bool(result.get("reused_explainer_id")),
+            "signal": _asked_signal(conn, result.get("topic") or ""),
+        }
 
     @application.post("/drafts/{draft_id}")
     def post_draft(
@@ -210,6 +223,67 @@ def _themes(conn: sqlite3.Connection) -> list[dict]:
         item["review_ids"] = _load_json(item["review_ids"], [])
         themes.append(item)
     return themes
+
+
+def _live_window() -> tuple[str, str]:
+    from datetime import datetime
+
+    from desk.schedule import CLOCK, containing_week
+
+    start, end = containing_week(datetime.now(CLOCK))
+    return start.isoformat(timespec="seconds"), end.isoformat(timespec="seconds")
+
+
+def _support_signals(
+    conn: sqlite3.Connection,
+    window_start: str | None = None,
+    window_end: str | None = None,
+) -> list[dict]:
+    shown = []
+    for signal in _signals(conn):
+        if len(signal["topic"]) > 32:
+            continue
+        if window_start and (
+            signal["window_start"] != window_start or signal["window_end"] != window_end
+        ):
+            continue
+        status = conn.execute(
+            "SELECT status FROM explainers WHERE topic = ? ORDER BY rowid DESC LIMIT 1",
+            (signal["topic"],),
+        ).fetchone()
+        signal["explainer_status"] = status["status"] if status else ""
+        shown.append(signal)
+    return shown
+
+
+def _asked_signal(conn: sqlite3.Connection, topic: str) -> dict | None:
+    if not topic or len(topic) > 32:
+        return None
+    start, end = _live_window()
+    row = conn.execute(
+        """
+        SELECT count, confusion_summary FROM recurrence
+        WHERE topic = ? AND window_start = ? AND window_end = ?
+        """,
+        (topic, start, end),
+    ).fetchone()
+    if row is None or row["count"] < 5:
+        return None
+    status = conn.execute(
+        "SELECT status FROM explainers WHERE topic = ? ORDER BY rowid DESC LIMIT 1",
+        (topic,),
+    ).fetchone()
+    explainer_status = status["status"] if status else ""
+    summary = row["confusion_summary"] or ""
+    marker = "They ask: "
+    ask = summary.split(marker, 1)[1].strip() if marker in summary else summary
+    note = ""
+    if explainer_status == "canonical":
+        note = " · answer reused"
+    elif explainer_status == "pending":
+        note = " · waiting for approval"
+    label = "DP charges" if topic == "fees.dp" else topic.split(".")[-1].replace("_", " ")
+    return {"topic": topic, "label": label, "count": row["count"], "ask": ask, "note": note}
 
 
 def _signals(conn: sqlite3.Connection) -> list[dict]:

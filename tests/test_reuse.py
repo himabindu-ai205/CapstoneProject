@@ -14,6 +14,6 @@ def test_sixth_question_copies_the_canonical_reply(conn, topics, csv_path):
     calls = ScriptedModel()
     sixth = handle_question(conn, "When are DP charges levied again?", calls, topics)
     stored = conn.execute("SELECT reply_text FROM explainers WHERE status = 'canonical'").fetchone()[0]
-    assert sixth["body"] == stored
+    assert sixth["body"] == f"DP charges are levied on a sell. {stored}"
     assert sixth["reused_explainer_id"]
     assert calls.calls == 0

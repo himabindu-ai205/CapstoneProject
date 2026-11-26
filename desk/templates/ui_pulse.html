@@ -184,11 +184,12 @@
           <article class="xl:col-span-6 h-full bg-light-surface-container-low border border-light-outline rounded-md p-card-pad flex flex-col gap-3">
             <header class="flex items-center justify-between gap-2">
               <h2 class="font-body text-title-md text-light-on-surface">Emerging friction themes</h2>
-              <span class="font-body text-body-sm text-light-on-surface-variant tabular-nums">{{ pulse.themes|length }} active</span>
+              {% set on_latest = pulse.week_options and pulse.week_options[0].selected %}
+              <span id="friction-count" class="font-body text-body-sm text-light-on-surface-variant tabular-nums">{{ pulse.themes|length + (pulse.signals|length if on_latest else 0) }} active</span>
             </header>
-            <ul class="divide-y divide-light-outline flex flex-col">
+            <ul id="friction-list" data-latest="{{ '1' if on_latest else '0' }}" class="divide-y divide-light-outline flex flex-col">
               {% for theme in pulse.themes %}
-              <li class="py-3 first:pt-1 flex items-start gap-3">
+              <li data-theme="1" class="py-3 first:pt-1 flex items-start gap-3">
                 <span class="inline-flex items-center justify-center w-7 h-7 rounded {% if theme.friction %}bg-error-container text-error{% else %}bg-success-container text-success{% endif %} shrink-0 mt-0.5 font-body text-label-md tabular-nums">{{ loop.index }}</span>
                 <div class="min-w-0 flex-1 flex flex-col gap-1">
                   <div class="flex flex-wrap items-center justify-between gap-2">
@@ -199,6 +200,20 @@
                 </div>
               </li>
               {% endfor %}
+              {% if on_latest %}
+              {% for signal in pulse.signals %}
+              <li data-topic="{{ signal.topic }}" class="py-3 flex items-start gap-3">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded bg-error-container text-error shrink-0 mt-0.5 font-body text-label-md tabular-nums">{{ pulse.themes|length + loop.index }}</span>
+                <div class="min-w-0 flex-1 flex flex-col gap-1">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="font-body text-title-sm text-light-on-surface">{% if signal.topic == 'fees.dp' %}DP charges{% else %}{{ signal.topic.split('.')|last|replace('_', ' ') }}{% endif %}</p>
+                    <span data-signal-count class="font-body text-label-sm text-error tabular-nums">{{ signal.count }} questions{% if signal.explainer_status == 'canonical' %} · answer reused{% elif signal.explainer_status == 'pending' %} · waiting for approval{% endif %}</span>
+                  </div>
+                  <p data-signal-ask class="font-body text-body-sm text-light-on-surface-variant">{{ signal.confusion_summary.split('They ask: ')|last }}</p>
+                </div>
+              </li>
+              {% endfor %}
+              {% endif %}
             </ul>
           </article>
         </section>
@@ -386,10 +401,10 @@
         var question = document.createElement("p");
         question.className = "font-body text-title-sm text-light-on-surface";
         question.textContent = turn.question;
-        if (turn.source) {
+        if (turn.reused || turn.source) {
           var badge = document.createElement("span");
           badge.className = "inline-flex items-center px-2 py-0.5 rounded bg-success-container text-success shrink-0";
-          badge.textContent = "Verified fact";
+          badge.textContent = turn.reused ? "Reused canonical answer" : "Verified fact";
           row.append(question, badge);
         } else {
           row.append(question);
@@ -433,6 +448,34 @@
       });
     }
 
+    function showSupportSignal(signal) {
+      var list = document.getElementById("friction-list");
+      if (!list || list.getAttribute("data-latest") !== "1") return;
+      var row = list.querySelector('[data-topic="' + signal.topic + '"]');
+      var countText = signal.count + " questions" + (signal.note || "");
+      if (row) {
+        row.querySelector("[data-signal-count]").textContent = countText;
+        row.querySelector("[data-signal-ask]").textContent = signal.ask;
+        return;
+      }
+      var index = list.querySelectorAll("li").length + 1;
+      row = document.createElement("li");
+      row.className = "py-3 flex items-start gap-3";
+      row.setAttribute("data-topic", signal.topic);
+      row.innerHTML = '<span class="inline-flex items-center justify-center w-7 h-7 rounded bg-error-container text-error shrink-0 mt-0.5 font-body text-label-md tabular-nums"></span>'
+        + '<div class="min-w-0 flex-1 flex flex-col gap-1"><div class="flex flex-wrap items-center justify-between gap-2">'
+        + '<p class="font-body text-title-sm text-light-on-surface"></p>'
+        + '<span data-signal-count class="font-body text-label-sm text-error tabular-nums"></span></div>'
+        + '<p data-signal-ask class="font-body text-body-sm text-light-on-surface-variant"></p></div>';
+      row.children[0].textContent = String(index);
+      row.querySelector(".text-title-sm").textContent = signal.label;
+      row.querySelector("[data-signal-count]").textContent = countText;
+      row.querySelector("[data-signal-ask]").textContent = signal.ask;
+      list.appendChild(row);
+      var heading = document.getElementById("friction-count");
+      if (heading) heading.textContent = index + " active";
+    }
+
     function addQuestion(question) {
       if (!current.title) current.title = question;
       var turn = { question: question, body: "Looking up the sources…", source: "" };
@@ -446,7 +489,9 @@
         .then(function (payload) {
           turn.body = payload.body || "Not covered.";
           turn.source = payload.source || "";
+          turn.reused = !!payload.reused;
           renderThread();
+          if (payload.signal) showSupportSignal(payload.signal);
         })
         .catch(function () {
           turn.body = "The desk could not reach the sources.";

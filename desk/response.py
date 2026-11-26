@@ -64,15 +64,16 @@ def orchestrate(
         conn.commit()
         return _result(queue_id, draft_id, intent, topic, body, None, "", "", "refusal", None)
 
-    canonical = _canonical_agent(conn, topic)
+    window_start, window_end = _question_window()
+    canonical = _canonical_agent(conn, topic, window_start, window_end)
     reviews = _reviews_agent(conn)
     if canonical["reply_text"]:
         official = {"hits": [{"url": url} for url in canonical["urls"]]}
     else:
         official = _official_agent(conn, redacted, model)
     if canonical["reply_text"]:
-        body = canonical["reply_text"]
-        citation = canonical["url"]
+        body = _with_question_sentence(redacted, canonical["reply_text"])
+        citation = _citation_for_question(conn, redacted, canonical)
         reused = canonical["explainer_id"]
         outcome = "reused"
     elif official["covered"]:
@@ -89,7 +90,8 @@ def orchestrate(
     flags = review_draft(body, citation, official["hits"], reviewer)
     draft_id = _put_draft(conn, queue_id, body, citation, routing_note, flags, reused)
     conn.commit()
-    record(conn, queue_id, intent, topic, redacted, WINDOW_START, WINDOW_END)
+    record(conn, queue_id, intent, topic, redacted, window_start, window_end)
+    _link_fee_signals(conn, topics)
     return _result(queue_id, draft_id, intent, topic, body, citation, routing_note, flags, outcome, reused)
 
 
@@ -132,7 +134,58 @@ def _reviews_agent(conn: sqlite3.Connection) -> dict:
     }
 
 
-def _canonical_agent(conn: sqlite3.Connection, topic: str) -> dict:
+def _lead_for_question(question: str) -> str:
+    lowered = question.lower()
+    if "pricing" in lowered and re.search(r"\blist", lowered):
+        return "Yes, the depository charge is listed on the pricing page."
+    if re.search(r"\bevery\b", lowered) and re.search(r"\bsell\b", lowered):
+        return "Yes, a DP charge applies on each sell."
+    if re.search(r"\bwhy\b", lowered):
+        return "A DP charge is taken when shares are sold."
+    if re.search(r"\bwhen\b", lowered) and re.search(r"\blev", lowered):
+        return "DP charges are levied on a sell."
+    return ""
+
+
+def _with_question_sentence(question: str, reply: str) -> str:
+    lead = _lead_for_question(question)
+    if not lead or lead.lower() in reply.lower():
+        return reply
+    return f"{lead} {reply}"
+
+
+def _citation_for_question(conn: sqlite3.Connection, question: str, canonical: dict) -> str | None:
+    if "pricing" in question.lower():
+        for url in canonical.get("urls") or []:
+            if "groww.in/pricing" in url:
+                return url
+        row = conn.execute(
+            "SELECT url FROM corpus_chunks WHERE url LIKE '%groww.in/pricing%' LIMIT 1"
+        ).fetchone()
+        if row and row[0]:
+            return row[0]
+    return canonical.get("url")
+
+
+def _question_window() -> tuple[str, str]:
+    from desk.schedule import CLOCK, containing_week
+
+    start, end = containing_week(datetime.now(CLOCK))
+    return start.isoformat(timespec="seconds"), end.isoformat(timespec="seconds")
+
+
+def _link_fee_signals(conn: sqlite3.Connection, topics: list[Topic]) -> None:
+    from desk.weekly import sync_fee_explainers
+
+    sync_fee_explainers(conn, topics)
+
+
+def _canonical_agent(
+    conn: sqlite3.Connection,
+    topic: str,
+    window_start: str,
+    window_end: str,
+) -> dict:
     row = conn.execute(
         """
         SELECT id, reply_text, url_a, url_b FROM explainers
@@ -146,7 +199,7 @@ def _canonical_agent(conn: sqlite3.Connection, topic: str) -> dict:
         SELECT count FROM recurrence
         WHERE topic = ? AND window_start = ? AND window_end = ?
         """,
-        (topic, WINDOW_START, WINDOW_END),
+        (topic, window_start, window_end),
     ).fetchone()
     count = count_row[0] if count_row else 0
     if row is None or not row[1]:
