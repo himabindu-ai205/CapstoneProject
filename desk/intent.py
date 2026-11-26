@@ -1,8 +1,7 @@
 import re
 
-_PAN = re.compile(r"[A-Z]{5}[0-9]{4}[A-Z]")
-_PHONE = re.compile(r"\b(?:\+91[\s-]?)?[6-9]\d{9}\b")
-_ACCOUNT = re.compile(r"\b\d{10,18}\b")
+from desk.guards import has_pii
+
 _ADVICE = (
     "should i",
     "which of these funds",
@@ -21,7 +20,7 @@ _PERFORMANCE = (
 REFUSALS = {
     "advice": "This desk states published Groww facts and does not recommend buying, selling, or holding.",
     "performance": "This desk states published Groww facts and does not give returns or performance figures.",
-    "pii": "This desk cannot take a PAN, phone number, or account number. Remove it and ask the question again.",
+    "pii": "This desk cannot take a PAN, Aadhaar, passport number, phone number, or account number. Remove it and ask the question again.",
 }
 
 
@@ -33,7 +32,7 @@ def _charge_on_a_sell(lowered: str) -> bool:
 
 
 def classify_intent(text: str) -> str:
-    if _PAN.search(text) or _PHONE.search(text) or _ACCOUNT.search(text):
+    if has_pii(text):
         return "pii"
     lowered = text.lower()
     if any(phrase in lowered for phrase in _ADVICE):

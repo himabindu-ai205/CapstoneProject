@@ -33,7 +33,7 @@ def handle_question(
         INSERT INTO queue_items (id, question, intent, topic, status, created_at)
         VALUES (?, ?, 'pending', 'topic.unknown', 'pending', ?)
         """,
-        (queue_id, question, _now()),
+        (queue_id, redact(question), _now()),
     )
     conn.commit()
     return orchestrate(conn, queue_id, question, model, topics, reviewer)

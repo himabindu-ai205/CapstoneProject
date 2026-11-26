@@ -88,6 +88,9 @@
             {% endif %}
           </div>
         </header>
+        {% if pulse.notice %}
+        <p class="font-body text-body-sm text-light-on-surface" role="status">{{ pulse.notice }}</p>
+        {% endif %}
 
         {% if not pulse.ready %}
         <p class="font-body text-body-md text-light-on-surface-variant">No reviews in the 4-week corpus.</p>
@@ -296,6 +299,22 @@
             </ul>
           </article>
         </section>
+        {% set chosen = namespace(id='') %}
+        {% for option in pulse.week_options %}{% if option.selected %}{% set chosen.id = option.id %}{% endif %}{% endfor %}
+        <div class="flex flex-wrap items-center gap-3">
+          <form method="post" action="/pulse/append-doc" target="_blank">
+            <input type="hidden" name="week" value="{{ chosen.id }}">
+            <button type="submit" class="inline-flex items-center justify-center px-5 py-2 rounded bg-light-primary text-light-on-primary">
+              <span class="font-body text-label-lg">Append doc</span>
+            </button>
+          </form>
+          <form method="post" action="/pulse/email-draft">
+            <input type="hidden" name="week" value="{{ chosen.id }}">
+            <button type="submit" class="inline-flex items-center justify-center px-5 py-2 rounded bg-light-surface-container-low text-light-on-surface border border-light-outline">
+              <span class="font-body text-label-lg">Email draft</span>
+            </button>
+          </form>
+        </div>
         {% endif %}
       </div>
       <div id="panel-support" role="tabpanel" class="hidden max-w-7xl w-full mx-auto flex-1 flex-col gap-gutter-xl">
@@ -326,7 +345,7 @@
             <label for="scheme-question-input" class="sr-only">Ask a scheme question</label>
             <textarea id="scheme-question-input" rows="2" placeholder="Ask about DP charges, exit load, expense ratio, or minimum SIP" class="w-full resize-none border-0 bg-transparent p-0 font-body text-body-md text-light-on-surface placeholder:text-light-on-surface-variant focus:ring-0"></textarea>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
-              <p class="font-body text-body-sm text-light-on-surface-variant">Only a question is sent. Do not enter PAN, Aadhaar, account numbers, OTP, email, or phone.</p>
+              <p class="font-body text-body-sm text-light-on-surface-variant">Only a question is sent. Do not enter PAN, Aadhaar, passport number, account numbers, OTP, email, or phone.</p>
               <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded bg-light-primary text-light-on-primary shrink-0">
                 <span class="font-body text-label-lg">Ask</span>
               </button>
@@ -487,6 +506,10 @@
       fetch("/ui/ask", { method: "POST", body: data })
         .then(function (response) { return response.json(); })
         .then(function (payload) {
+          if (payload.question) {
+            turn.question = payload.question;
+            if (current.turns[0] === turn) current.title = payload.question;
+          }
           turn.body = payload.body || "Not covered.";
           turn.source = payload.source || "";
           turn.reused = !!payload.reused;

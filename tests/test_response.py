@@ -20,6 +20,15 @@ def test_nav_question_is_the_fixed_refusal_and_does_not_call_the_model(conn, top
     assert "ABCDE1234F" not in conn.execute("SELECT question FROM queue_items WHERE id = ?", (pan["queue_id"],)).fetchone()[0]
     trace = conn.execute("SELECT text FROM traces WHERE event_id = ?", (pan["queue_id"],)).fetchone()[0]
     assert trace is None
+    stated = handle_question(conn, "my pan number is xyx", ScriptedModel(), topics)
+    assert stated["intent"] == "pii"
+    assert stated["body"] == REFUSALS["pii"]
+    assert stated["citation_url"] is None
+    stored_stated = conn.execute(
+        "SELECT question FROM queue_items WHERE id = ?", (stated["queue_id"],)
+    ).fetchone()[0]
+    assert "xyx" not in stored_stated
+    assert "[PAN]" in stored_stated
 
 
 def test_not_covered_names_the_query(conn, topics):

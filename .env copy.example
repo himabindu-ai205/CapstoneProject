@@ -11,3 +11,14 @@ GEMINI_MODEL=gemini-2.5-flash
 
 # SQLite path. Leave unset to use data/desk.sqlite.
 DESK_DB=data/desk.sqlite
+
+# Google Doc id from the URL, the segment after /d/. Append doc writes here.
+# Leave blank until the doc exists. The button does not create a document.
+GOOGLE_DOC_ID=
+
+# Recipient for the unsent Gmail draft. Defaults to product@groww.
+PULSE_DRAFT_TO=product@groww
+
+# Folder of the Google MCP server (the one that contains dist/index.js).
+# Leave blank to use the MCP Server folder next to this project.
+GOOGLE_MCP_DIR=

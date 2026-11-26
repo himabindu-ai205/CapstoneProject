@@ -88,6 +88,22 @@ def build_pulse(data_dir: Path | None = None, week: str | None = None) -> dict:
     }
 
 
+def pulse_text(pulse: dict) -> str:
+    lines = [
+        f"Weekly product pulse {pulse.get('subtitle') or ''}".strip(),
+        f"Average rating {pulse.get('this_rating')} ({pulse.get('delta_label')})",
+        f"Reviews this week {pulse.get('this_count')}",
+        f"Corpus {pulse.get('corpus_range')}: {pulse.get('corpus_count')}",
+    ]
+    for theme in pulse.get("themes") or []:
+        lines.append(
+            f"{theme['label']}: {theme['count']} reviews. {theme['action']} {theme['detail']}"
+        )
+        if theme.get("quote"):
+            lines.append(f"Quote: {theme['quote']}")
+    return "\n".join(lines)
+
+
 def _load(data_dir: Path) -> list[dict]:
     seen: set[str] = set()
     rows: list[dict] = []

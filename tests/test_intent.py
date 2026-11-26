@@ -16,6 +16,22 @@ def test_intent_order_pii_before_performance():
     assert "NAV" not in REFUSALS["performance"]
 
 
+def test_aadhaar_and_passport_are_pii():
+    assert classify_intent("My Aadhaar is 1234 5678 9012") == "pii"
+    assert classify_intent("aadhaar number is xy12") == "pii"
+    assert classify_intent("Passport A1234567") == "pii"
+    assert classify_intent("my passport number is xy12") == "pii"
+    assert classify_intent("Where can I see my Aadhaar number?") == "factual"
+    assert classify_intent("Where is my passport number?") == "factual"
+
+
+def test_stated_pan_is_pii_even_when_the_value_is_not_a_formal_pan():
+    assert classify_intent("my pan number is xyx") == "pii"
+    assert classify_intent("My PAN is xyx") == "pii"
+    assert classify_intent("pan number is xyx") == "pii"
+    assert classify_intent("Where can I see my PAN number?") == "factual"
+
+
 def test_topics_come_from_pricing_text_and_unknown_stays_unknown():
     topics = extract_charge_topics("Brokerage\nDP charges\n")
     topics += [Topic("payments.withdraw", "withdrawal"), Topic("account.demat", "demat")]

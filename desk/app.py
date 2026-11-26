@@ -10,6 +10,8 @@ from fastapi.templating import Jinja2Templates
 
 from desk.approval import decide, execute
 from desk.db import init_db
+from desk.guards import redact
+from desk.pulse_publish import release
 from desk.pulse_view import build_pulse, default_data_dir
 from desk.response import edit_draft, handle_question, set_draft_status
 from desk.topics import Topic, extract_charge_topics
@@ -52,6 +54,7 @@ def create_app(
     topics: list[Topic] | None = None,
     model=None,
     reviewer=None,
+    google_call=None,
 ) -> FastAPI:
     if conn is None:
         conn = _open_default()
@@ -91,15 +94,44 @@ def create_app(
     application.state.model = model
     application.state.reviewer = reviewer
     application.state.sink = {"doc": [], "mailbox": [], "canonical": []}
+    application.state.google_call = google_call
 
     def render(request: Request, name: str, **context):
         return TEMPLATES.TemplateResponse(request, name, context)
 
     @application.get("/")
-    def home(request: Request, week: str = ""):
+    def home(request: Request, week: str = "", notice: str = ""):
         pulse = build_pulse(default_data_dir(), week or None)
         pulse["signals"] = _support_signals(conn, *_live_window())
+        pulse["notice"] = _NOTICE.get(notice, "")
         return render(request, "ui_pulse.html", pulse=pulse)
+
+    @application.post("/pulse/append-doc")
+    def pulse_append_doc(week: str = Form("")):
+        return _release_pulse("append_doc", week)
+
+    @application.post("/pulse/email-draft")
+    def pulse_email_draft(week: str = Form("")):
+        return _release_pulse("email_draft", week)
+
+    def _release_pulse(kind: str, week: str):
+        from desk.google_mcp import mcp_call, mcp_script
+        from desk.model import load_env
+
+        load_env()
+        pulse = build_pulse(default_data_dir(), week or None)
+        chosen = _selected_week(pulse, week)
+        call = application.state.google_call
+        if call is None and mcp_script() is None:
+            return _pulse_redirect(chosen, "need-server")
+        code = release(conn, application.state.sink, pulse, kind, call or mcp_call)
+        if kind == "append_doc" and code == "appended":
+            document_id = os.environ.get("GOOGLE_DOC_ID", "").strip()
+            return RedirectResponse(
+                f"https://docs.google.com/document/d/{document_id}/edit",
+                status_code=303,
+            )
+        return _pulse_redirect(chosen, code)
 
     @application.post("/questions")
     def post_question(question: str = Form("")):
@@ -117,10 +149,12 @@ def create_app(
                 "body": "The desk could not complete that lookup. Try again in a moment.",
                 "source": "",
             }
+        redacted = redact(question)
         return {
             "body": result["body"],
             "source": result.get("citation_url") or "",
             "reused": bool(result.get("reused_explainer_id")),
+            "question": redacted,
             "signal": _asked_signal(conn, result.get("topic") or ""),
         }
 
@@ -336,6 +370,30 @@ def _cited_chunks(conn: sqlite3.Connection) -> list[dict]:
         else:
             chunks.append(dict(row))
     return chunks
+
+
+_NOTICE = {
+    "appended": "Appended this week's pulse to the Google Doc.",
+    "drafted": "Saved a Gmail draft of this week's pulse. It was not sent.",
+    "need-doc": "Set GOOGLE_DOC_ID to the id in the Google Doc URL, then press Append doc again.",
+    "need-server": "The Google MCP server is not available. Connect it, then press the button again.",
+    "failed": "Google did not accept that write. The other button was not run.",
+    "empty": "There is no pulse to write for this week.",
+}
+
+
+def _selected_week(pulse: dict, requested: str) -> str:
+    for option in pulse.get("week_options") or []:
+        if option.get("selected"):
+            return option["id"]
+    return requested
+
+
+def _pulse_redirect(week: str, notice: str):
+    from urllib.parse import urlencode
+
+    query = urlencode({key: value for key, value in (("week", week), ("notice", notice)) if value})
+    return RedirectResponse(f"/?{query}", status_code=303)
 
 
 def _actions(conn: sqlite3.Connection) -> list[dict]:
