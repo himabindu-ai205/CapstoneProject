@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
@@ -63,7 +64,22 @@ def create_app(
         if reviewer is None:
             reviewer = _live_reviewer()
 
-    application = FastAPI()
+    @asynccontextmanager
+    async def lifespan(_application):
+        count = conn.execute("SELECT COUNT(*) FROM corpus_chunks").fetchone()[0]
+        if not count:
+            try:
+                from datetime import datetime
+
+                from desk.build_corpus import build_live, http_get
+                from desk.schedule import CLOCK
+
+                build_live(conn, http_get, datetime.now(CLOCK).date().isoformat())
+            except Exception:
+                pass
+        yield
+
+    application = FastAPI(lifespan=lifespan)
     application.state.conn = conn
     application.state.topics = topics
     application.state.model = model
